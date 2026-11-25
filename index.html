@@ -336,6 +336,15 @@ footer { position: relative; z-index: 1; }
         <p class="msg err" id="adminErr" hidden></p>
         <div class="panel" id="drawPanel" style="margin-top:12px"></div>
         <div class="people" id="people"></div>
+        <div class="panel" id="textTest" hidden style="margin-bottom:14px">
+          <strong>Check text links</strong>
+          <span class="soft">Sends one test text containing a link to the number below and shows the texting service's answer. It uses one credit only if the text goes through.</span>
+          <div class="row">
+            <input id="t-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="555-123-4567" aria-label="Mobile number for the test text" style="max-width:14rem">
+            <button class="btn small" id="textTestBtn" type="button">Send test text</button>
+          </div>
+          <p class="msg" id="textTestMsg" hidden></p>
+        </div>
         <div class="row"><button class="btn plain" type="button" data-go="home">Leave the desk</button></div>
       </div>
     </section>
@@ -357,7 +366,7 @@ footer { position: relative; z-index: 1; }
   var mock = (function () {
     var people = [], draw = null, n = 0;
     function list() {
-      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100,
+      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true,
         people: people.map(function (p) { return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null }, p); }) };
     }
     function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
@@ -382,6 +391,7 @@ footer { position: relative; z-index: 1; }
       adminDraw: function (pw) { admin(pw); if (people.length < 3) throw new Error('You need at least 3 people signed up to draw names.'); draw = new Date().toISOString(); return list(); },
       adminResend: function (pw) { admin(pw); return list(); },
       adminReset: function (pw) { admin(pw); draw = null; return list(); },
+      adminTestText: function (pw, phone) { admin(pw); return { ok: false, message: 'Preview mode: no text was sent to ' + phone + '.' }; },
       adminSetHousehold: function (pw, id, h) { admin(pw); people.forEach(function (p) { if (p.id === id) p.household = String(h).trim(); }); return list(); },
       adminClearAll: function (pw) { admin(pw); people = []; draw = null; return list(); }
     };
@@ -505,6 +515,16 @@ footer { position: relative; z-index: 1; }
     }).catch(function (e) { busy(btn, false); show($('adminErr'), e.message); });
   }
 
+  $('textTestBtn').addEventListener('click', function () {
+    var btn = this, msg = $('textTestMsg');
+    msg.hidden = true;
+    busy(btn, true, 'Sending…');
+    api('adminTestText', adminPw, $('t-phone').value).then(function (r) {
+      busy(btn, false);
+      msg.className = 'msg ' + (r.ok ? 'ok' : 'err'); show(msg, r.message);
+    }).catch(function (e) { busy(btn, false); msg.className = 'msg err'; show(msg, e.message); });
+  });
+
   /* A button that asks "are you sure" in place before it runs. */
   function confirmBtn(label, cls, question, yesLabel, onYes) {
     var box = el('div', 'row');
@@ -523,6 +543,7 @@ footer { position: relative; z-index: 1; }
   function render(data) {
     var panel = $('drawPanel'), list = $('people'), n = data.people.length;
     panel.textContent = ''; list.textContent = '';
+    $('textTest').hidden = !data.textsOn;
 
     if (!data.drawn) {
       panel.append(el('strong', null, n + (n === 1 ? ' person' : ' people') + ' signed up'));
