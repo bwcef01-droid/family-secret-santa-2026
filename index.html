@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base target="_top">
+<title>Secret Santa</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Bitter:wght@400;600;700&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: a kraft-paper notice pinned to a barn-wood wall, under a buffalo-plaid band. */
+:root {
+  --wood: #3b2a1e;
+  --wood-seam: #2a1d14;
+  --paper: #f3e6cd;
+  --paper-deep: #e6d3b0;
+  --cream: #fcf7ec;
+  --barn: #8e2a23;
+  --barn-dark: #6f1f1a;
+  --pine: #2e4a3a;
+  --ink: #2b2320;
+  --ink-soft: #6d5740;
+  --twine: #b08b57;
+  --display: 'Rye', 'Rockwell', Georgia, serif;
+  --body: 'Bitter', Georgia, 'Times New Roman', serif;
+  --hand: 'Caveat', 'Segoe Print', cursive;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body {
+  margin: 0;
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  background-color: var(--wood);
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 118px, var(--wood-seam) 118px 121px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px);
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+
+.plaid {
+  height: 56px;
+  background-color: var(--barn);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(20,12,10,.55) 0 14px, transparent 14px 28px),
+    repeating-linear-gradient(90deg, rgba(20,12,10,.55) 0 14px, transparent 14px 28px);
+  border-bottom: 3px solid var(--wood-seam);
+}
+.wrap {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+.notice {
+  position: relative;
+  margin-top: -18px;
+  background: var(--paper);
+  background-image: radial-gradient(rgba(120,90,50,.07) 1px, transparent 1px);
+  background-size: 5px 5px;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  padding: 34px 28px 30px;
+}
+.notice::before, .notice::after { /* nail heads */
+  content: ""; position: absolute; top: 12px; width: 11px; height: 11px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #9a9189, #3d3833);
+}
+.notice::before { left: 14px; } .notice::after { right: 14px; }
+
+header { text-align: center; }
+.sprig { width: 74px; height: 46px; color: var(--pine); }
+h1 {
+  font-family: var(--display); font-weight: 400; color: var(--barn);
+  font-size: clamp(2.1rem, 8vw, 3.2rem); line-height: 1.1; margin: 4px 0 6px;
+  text-wrap: balance; overflow-wrap: anywhere;
+}
+.tagline { font-family: var(--hand); font-size: 1.6rem; color: var(--pine); margin: 0; line-height: 1.2; }
+.rule {
+  border: 0; height: 10px; margin: 22px 0;
+  background: repeating-linear-gradient(90deg, var(--twine) 0 9px, transparent 9px 15px) center / 100% 2px no-repeat;
+}
+h2 { font-family: var(--display); font-weight: 400; font-size: 1.45rem; color: var(--pine); margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0 0 14px; }
+.soft { color: var(--ink-soft); font-size: .95rem; }
+
+.steps { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0 0 22px; }
+.steps li {
+  flex: 1; min-width: 0; text-align: center; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
+  padding: 7px 4px; border-bottom: 3px solid var(--paper-deep); color: var(--ink-soft);
+}
+.steps li.on { border-color: var(--barn); color: var(--barn); font-weight: 700; }
+
+form { display: grid; gap: 16px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+label { display: grid; gap: 5px; font-weight: 600; font-size: .95rem; min-width: 0; }
+label small { font-weight: 400; color: var(--ink-soft); }
+input[type=text], input[type=email], input[type=tel], input[type=password], select, textarea {
+  font: inherit; color: var(--ink); background: var(--cream);
+  border: 1px solid var(--twine); border-bottom-width: 3px; border-radius: 3px;
+  padding: 10px 12px; width: 100%; min-width: 0;
+}
+textarea { min-height: 84px; resize: vertical; }
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; }
+legend { font-family: var(--hand); font-size: 1.45rem; color: var(--barn); padding: 0; margin-bottom: 4px; }
+
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; color: var(--cream); background: var(--barn);
+  border: 0; border-radius: 4px; padding: 12px 22px;
+  outline: 1px dashed rgba(252,247,236,.6); outline-offset: -5px; /* stitched edge */
+}
+.btn:hover { background: var(--barn-dark); }
+.btn:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.pine { background: var(--pine); }
+.btn.plain { background: transparent; color: var(--barn); outline: 0; text-decoration: underline; padding: 12px 8px; }
+.btn.small { padding: 7px 12px; font-size: .88rem; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.center { justify-content: center; }
+
+.msg { padding: 11px 14px; border-radius: 4px; font-size: .95rem; margin: 0; }
+.msg.err { background: #f2d3cb; border-left: 5px solid var(--barn); }
+.msg.ok { background: #d5e2d2; border-left: 5px solid var(--pine); }
+
+.rules { counter-reset: r; list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 10px; }
+.rules li { background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 12px 14px; }
+.rules li strong { color: var(--barn); }
+.budget {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 34px; text-align: center;
+  background: var(--pine); color: var(--cream); border-radius: 4px; padding: 16px; margin: 0 0 14px;
+}
+.budget b { display: block; font-family: var(--display); font-weight: 400; font-size: 2rem; line-height: 1.1; }
+.budget span { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+.accept { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; background: var(--paper-deep); padding: 14px; border-radius: 4px; }
+.accept input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--barn); }
+
+.count { font-family: var(--hand); font-size: 1.5rem; color: var(--barn); text-align: center; margin: 0 0 14px; }
+.how { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 8px; }
+.how li { padding-left: 26px; position: relative; }
+.how li::before { content: "\2605"; position: absolute; left: 2px; color: var(--twine); }
+
+.person { background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 12px 14px; display: grid; gap: 6px; }
+.person h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.person .mail { color: var(--ink-soft); font-size: .9rem; overflow-wrap: anywhere; }
+.person dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .88rem; }
+.person dt { color: var(--ink-soft); } .person dd { margin: 0; overflow-wrap: anywhere; }
+.people { display: grid; gap: 10px; margin: 14px 0; }
+.badge { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--pine); color: var(--cream); }
+.badge.bad { background: var(--barn); }
+.drew { text-align: center; margin: 0 0 16px; }
+.drew b { display: block; font-family: var(--display); font-weight: 400; color: var(--barn); font-size: clamp(2rem, 9vw, 3rem); line-height: 1.15; overflow-wrap: anywhere; }
+.about { margin: 0 0 18px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 14px; }
+.about dt { color: var(--ink-soft); font-size: .9rem; } .about dd { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
+.ideas { list-style: none; padding: 0; margin: 0 0 18px; }
+.ideas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px dashed var(--twine); }
+.ideas a { color: var(--barn); font-weight: 700; white-space: nowrap; }
+.panel { background: var(--paper-deep); border-radius: 4px; padding: 14px; display: grid; gap: 10px; }
+footer { text-align: center; margin-top: 18px; }
+footer button { font: inherit; font-size: .85rem; background: none; border: 0; color: #cbb89a; text-decoration: underline; cursor: pointer; padding: 8px; }
+.preview { background: #f7e7a6; color: #3b2a1e; text-align: center; font-size: .85rem; padding: 6px 12px; }
+@media (max-width: 480px) { .notice { padding: 30px 18px 24px; } }
+@media (prefers-reduced-motion: no-preference) { .view { animation: in .25s ease-out; } @keyframes in { from { opacity: .4; transform: translateY(4px); } } }
+</style>
+</head>
+<body>
+<div class="preview" id="previewBar" hidden>Preview mode: nothing here is saved or emailed. The admin password in preview is "preview".</div>
+<div class="plaid"></div>
+<div class="wrap">
+  <main class="notice">
+    <header>
+      <svg class="sprig" viewBox="0 0 74 46" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M37 44V8M37 14l-9-7M37 14l9-7M37 22l-12-8M37 22l12-8M37 30l-14-8M37 30l14-8M37 38l-12-6M37 38l12-6"/>
+        <circle cx="37" cy="5" r="3" fill="#8e2a23" stroke="none"/>
+        <path d="M6 40c8-2 14-2 22 0M46 40c8-2 14-2 22 0" stroke="#b08b57"/>
+      </svg>
+      <h1 id="eventName">Secret Santa</h1>
+      <p class="tagline">'tis the season for giving</p>
+    </header>
+    <hr class="rule">
+
+    <!-- Home -->
+    <section class="view" id="v-home">
+      <p class="count" id="count">Checking the sign-up sheet&hellip;</p>
+      <div id="homeOpen">
+        <ul class="how">
+          <li>Put your name in and tell us a little about yourself.</li>
+          <li>Read the rules and agree to them.</li>
+          <li>When names are drawn, you get an email with the person you're buying for and gift ideas picked from their answers.</li>
+          <li>Everyone who signs up gives one gift and gets one gift. Nobody but you sees who you drew.</li>
+        </ul>
+        <div class="row center"><button class="btn" id="startBtn" type="button">Put my name in</button></div>
+      </div>
+      <p class="msg ok" id="homeClosed" hidden>Names have been drawn and sign-ups are closed. If you signed up, check your email (and your spam folder) for the person you drew.</p>
+    </section>
+
+    <!-- Step 1 -->
+    <section class="view" id="v-form" hidden>
+      <ol class="steps"><li class="on">1 &middot; About you</li><li>2 &middot; The rules</li><li>3 &middot; You're in</li></ol>
+      <form id="signupForm" novalidate>
+        <fieldset>
+          <legend>Who are you?</legend>
+          <div class="pair">
+            <label for="f-name">Name <input id="f-name" type="text" maxlength="80" autocomplete="name" required></label>
+            <label for="f-email">Email <input id="f-email" type="email" maxlength="120" autocomplete="email" required></label>
+          </div>
+          <p class="soft" style="margin:-8px 0 0">Your draw is emailed here, so double-check it.</p>
+          <label for="f-phone" id="phoneWrap" hidden>Mobile number <small>optional. Add it to also get your draw by text (US numbers).</small>
+            <input id="f-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="555-123-4567"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Your sizes</legend>
+          <div class="pair">
+            <label for="f-shirt">T-shirt
+              <select id="f-shirt" required>
+                <option value="">Choose&hellip;</option>
+                <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option>
+                <option>2XL</option><option>3XL</option><option>4XL</option>
+              </select>
+            </label>
+            <label for="f-pants">Pants <input id="f-pants" type="text" maxlength="40" placeholder="34x32, or women's 10" required></label>
+            <label for="f-shoes">Shoes <input id="f-shoes" type="text" maxlength="40" placeholder="men's 11, women's 8&frac12;" required></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Your favorites</legend>
+          <label for="f-colors">Favorite colors <input id="f-colors" type="text" maxlength="120" placeholder="forest green, navy" required></label>
+          <label for="f-food">Favorite food <small>snacks, sweets and treats count</small>
+            <input id="f-food" type="text" maxlength="160" placeholder="beef jerky, dark chocolate" required></label>
+          <label for="f-hobbies">Hobbies, games and gaming console <small>separate with commas</small>
+            <textarea id="f-hobbies" maxlength="300" placeholder="fishing, board games, Xbox" required></textarea></label>
+        </fieldset>
+        <p class="msg err" id="formErr" hidden></p>
+        <div class="row">
+          <button class="btn" type="submit">Next: the rules</button>
+          <button class="btn plain" type="button" data-go="home">Back</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="view" id="v-rules" hidden>
+      <ol class="steps"><li>1 &middot; About you</li><li class="on">2 &middot; The rules</li><li>3 &middot; You're in</li></ol>
+      <h2>The rules of the swap</h2>
+      <p class="soft">Your sign-up isn't finished until you accept these.</p>
+      <div class="budget">
+        <div><b id="minSpend">$25</b><span>Minimum spend</span></div>
+        <div><b id="maxSpend">$40</b><span>Maximum spend</span></div>
+      </div>
+      <ol class="rules">
+        <li><strong>Stay in the budget.</strong> Spend at least <span data-min>$25</span> and no more than <span data-max>$40</span> on your gift.</li>
+        <li><strong>You give one, you get one.</strong> Signing up means you buy a gift for the person you draw, and someone else buys one for you.</li>
+        <li><strong>Keep it secret.</strong> Don't tell anyone who you drew, and don't ask who drew you.</li>
+        <li><strong>Shop from their answers.</strong> Use the sizes and favorites your person gave so the gift fits them.</li>
+        <li><strong>Follow through.</strong> If something comes up and you can't take part, tell the organizer before names are drawn so nobody goes without.</li>
+      </ol>
+      <p class="soft" id="detailsLine" hidden></p>
+      <label class="accept" for="f-accept"><input id="f-accept" type="checkbox"> <span>I have read the rules and I agree to follow them.</span></label>
+      <p class="msg err" id="rulesErr" hidden style="margin-top:14px"></p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" id="finishBtn" type="button" disabled>Finish signing up</button>
+        <button class="btn plain" type="button" data-go="form">Back</button>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="view" id="v-done" hidden>
+      <ol class="steps"><li>1 &middot; About you</li><li>2 &middot; The rules</li><li class="on">3 &middot; You're in</li></ol>
+      <h2 id="doneTitle">You're in!</h2>
+      <p>Your name is in the hat. When the organizer draws names, you'll get an email telling you who you're buying for, with their sizes, favorites and a list of Amazon gift ideas.</p>
+      <p class="soft">Watch your inbox, and peek in spam if it doesn't show up.</p>
+      <div class="row"><button class="btn pine" type="button" data-go="home">Back to the start</button></div>
+    </section>
+
+    <!-- Personal draw result (opened from the private link in the email or text) -->
+    <section class="view" id="v-result" hidden>
+      <p class="count" id="resultWait">Opening your draw&hellip;</p>
+      <p class="msg err" id="resultErr" hidden></p>
+      <div id="resultBody" hidden>
+        <p class="drew"><span id="resultHowdy"></span> <b id="resultName"></b></p>
+        <div class="budget">
+          <div><b id="resultMin">$25</b><span>Minimum spend</span></div>
+          <div><b id="resultMax">$40</b><span>Maximum spend</span></div>
+        </div>
+        <p class="soft" id="resultDetails" hidden></p>
+        <h2 id="resultAboutTitle">About them</h2>
+        <dl class="about" id="resultAbout"></dl>
+        <h2>Gift ideas on Amazon</h2>
+        <p class="soft">Picked from their answers. Each link opens Amazon already filtered to your budget.</p>
+        <ul class="ideas" id="resultIdeas"></ul>
+        <p class="msg ok">Keep it under your hat. This page is only for you, so don't share the link.</p>
+      </div>
+    </section>
+
+    <!-- Admin -->
+    <section class="view" id="v-admin" hidden>
+      <h2>Organizer's desk</h2>
+      <form id="loginForm">
+        <label for="a-pw">Admin password <input id="a-pw" type="password" autocomplete="current-password" required></label>
+        <p class="msg err" id="loginErr" hidden></p>
+        <div class="row"><button class="btn" type="submit">Open</button><button class="btn plain" type="button" data-go="home">Back</button></div>
+      </form>
+      <div id="adminBody" hidden>
+        <p class="msg ok" id="adminNote" hidden></p>
+        <p class="msg err" id="adminErr" hidden></p>
+        <div class="panel" id="drawPanel" style="margin-top:12px"></div>
+        <div class="people" id="people"></div>
+        <div class="row"><button class="btn plain" type="button" data-go="home">Leave the desk</button></div>
+      </div>
+    </section>
+  </main>
+  <footer><button type="button" id="adminLink">Organizer sign-in</button></footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var live = !!(window.google && google.script && google.script.run);
+  // When this page is hosted outside Apps Script (the Google Sites page), it talks to the script here.
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyeirSh2xguaammJy_feSeN80aZIqI3rRoQnSCmY1o26hckWasoIe_-MpaFFdCfuI3d4A/exec';
+  var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  var remote = !live && !isLocal && !!API_URL;
+
+  /* ---- Preview stand-in for the server, used only when the file is opened outside Apps Script ---- */
+  var mock = (function () {
+    var people = [], draw = null, n = 0;
+    function list() {
+      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100,
+        people: people.map(function (p) { return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null }, p); }) };
+    }
+    function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
+    return {
+      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true }; },
+      signUp: function (f) {
+        if (draw) throw new Error('Sign-ups are closed. Names have already been drawn.');
+        if (people.some(function (p) { return p.email === f.email.toLowerCase(); })) throw new Error('That email address is already signed up.');
+        var p = Object.assign({}, f, { id: 'm' + (++n), email: f.email.toLowerCase() }); delete p.accepted; people.push(p);
+        return { ok: true, name: f.name };
+      },
+      getResult: function (code) {
+        if (code !== 'sample') throw new Error('This result link is not valid. Names may have been drawn again, so check for a newer email or text.');
+        return { eventName: 'Secret Santa', details: '', min: 25, max: 40, giver: 'Ann', name: 'Bob', shirt: 'XL', pants: '36x32', shoes: "men's 11",
+          colors: 'navy, forest green', food: 'beef jerky, hot sauce', hobbies: 'fishing, grilling, Xbox',
+          ideas: [{ label: 'fishing tackle gift set', url: 'https://www.amazon.com/s?k=fishing%20tackle%20gift%20set&rh=p_36%3A2500-4000' },
+            { label: 'Xbox gift card', url: 'https://www.amazon.com/s?k=Xbox%20gift%20card&rh=p_36%3A2500-4000' }] };
+      },
+      adminList: function (pw) { admin(pw); return list(); },
+      adminDelete: function (pw, id) { admin(pw); people = people.filter(function (p) { return p.id !== id; }); return list(); },
+      adminDraw: function (pw) { admin(pw); if (people.length < 3) throw new Error('You need at least 3 people signed up to draw names.'); draw = new Date().toISOString(); return list(); },
+      adminResend: function (pw) { admin(pw); return list(); },
+      adminReset: function (pw) { admin(pw); draw = null; return list(); },
+      adminClearAll: function (pw) { admin(pw); people = []; draw = null; return list(); }
+    };
+  })();
+
+  function api(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolve, reject) {
+      if (live) {
+        var run = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) {
+          reject(new Error(String((e && e.message) || e).replace(/^Error:\s*/, '')));
+        });
+        run[fn].apply(run, args);
+      } else if (remote) {
+        fetch(API_URL, {
+          method: 'POST', credentials: 'omit', redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ fn: fn, args: args })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d && d.ok) resolve(d.result); else reject(new Error((d && d.error) || 'Something went wrong. Please try again.'));
+        }).catch(function () { reject(new Error('Could not reach the sign-up sheet. Check your connection and try again.')); });
+      } else {
+        setTimeout(function () { try { resolve(mock[fn].apply(null, args)); } catch (e) { reject(e); } }, 150);
+      }
+    });
+  }
+
+  function show(msgEl, text) { msgEl.textContent = text || ''; msgEl.hidden = !text; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function busy(btn, on, label) {
+    if (on) { btn.dataset.label = btn.textContent; btn.textContent = label || 'Working…'; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.label || btn.textContent; btn.disabled = false; }
+  }
+
+  /* ---- Views ---- */
+  var views = ['home', 'form', 'rules', 'done', 'result', 'admin'];
+  function go(name) {
+    views.forEach(function (v) { $('v-' + v).hidden = v !== name; });
+    if (name === 'home') loadStatus();
+    if (name !== 'admin') { adminPw = null; $('adminBody').hidden = true; $('loginForm').hidden = false; $('a-pw').value = ''; }
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-go]');
+    if (t) go(t.dataset.go);
+  });
+
+  /* ---- Home ---- */
+  function loadStatus() {
+    api('getStatus').then(function (s) {
+      $('eventName').textContent = s.eventName;
+      document.title = s.eventName;
+      var min = '$' + s.min, max = '$' + s.max;
+      $('minSpend').textContent = min; $('maxSpend').textContent = max;
+      document.querySelectorAll('[data-min]').forEach(function (n) { n.textContent = min; });
+      document.querySelectorAll('[data-max]').forEach(function (n) { n.textContent = max; });
+      show($('detailsLine'), s.details);
+      $('phoneWrap').hidden = !s.texts;
+      $('count').textContent = s.count === 0 ? 'The hat is empty. Be the first name in!'
+        : s.count === 1 ? '1 name in the hat so far' : s.count + ' names in the hat so far';
+      $('homeOpen').hidden = s.drawn; $('homeClosed').hidden = !s.drawn;
+    }).catch(function () { $('count').textContent = 'Could not reach the sign-up sheet. Refresh to try again.'; });
+  }
+  $('startBtn').addEventListener('click', function () { go('form'); $('f-name').focus(); });
+
+  /* ---- Sign-up ---- */
+  var fields = ['name', 'email', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+  function readForm() {
+    var d = {};
+    fields.forEach(function (f) { d[f] = $('f-' + f).value.trim(); });
+    d.phone = $('phoneWrap').hidden ? '' : $('f-phone').value.trim();
+    return d;
+  }
+  $('signupForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var d = readForm(), err = '';
+    if (!d.name) err = 'Please enter your name.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) err = 'Please enter a valid email address.';
+    else if (fields.some(function (f) { return !d[f]; })) err = 'Please fill in every question so your Secret Santa has something to go on.';
+    else if (d.phone && !/^1?\d{10}$/.test(d.phone.replace(/\D/g, ''))) err = 'Please enter a 10-digit US mobile number, or leave it blank.';
+    show($('formErr'), err);
+    if (!err) { show($('rulesErr'), ''); go('rules'); }
+  });
+  $('f-accept').addEventListener('change', function () { $('finishBtn').disabled = !this.checked; });
+  $('finishBtn').addEventListener('click', function () {
+    var btn = this, d = readForm();
+    d.accepted = $('f-accept').checked;
+    show($('rulesErr'), '');
+    busy(btn, true, 'Adding your name…');
+    api('signUp', d).then(function (r) {
+      $('doneTitle').textContent = "You're in, " + r.name + '!';
+      $('signupForm').reset(); $('f-accept').checked = false;
+      busy(btn, false); btn.disabled = true;
+      go('done');
+    }).catch(function (e2) { busy(btn, false); show($('rulesErr'), e2.message); });
+  });
+
+  /* ---- Admin ---- */
+  var adminPw = null;
+  $('adminLink').addEventListener('click', function () { go('admin'); $('a-pw').focus(); });
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = this.querySelector('button[type=submit]'), pw = $('a-pw').value;
+    show($('loginErr'), ''); busy(btn, true);
+    api('adminList', pw).then(function (data) {
+      adminPw = pw; busy(btn, false);
+      $('loginForm').hidden = true; $('adminBody').hidden = false;
+      show($('adminNote'), ''); show($('adminErr'), '');
+      render(data);
+    }).catch(function (e2) { busy(btn, false); show($('loginErr'), e2.message); });
+  });
+
+  function act(btn, label, fn, args, note) {
+    show($('adminErr'), ''); show($('adminNote'), '');
+    busy(btn, true, label);
+    api.apply(null, [fn, adminPw].concat(args || [])).then(function (data) {
+      render(data);
+      show($('adminNote'), typeof note === 'function' ? note(data) : note);
+    }).catch(function (e) { busy(btn, false); show($('adminErr'), e.message); });
+  }
+
+  /* A button that asks "are you sure" in place before it runs. */
+  function confirmBtn(label, cls, question, yesLabel, onYes) {
+    var box = el('div', 'row');
+    var first = el('button', 'btn ' + cls, label); first.type = 'button';
+    var q = el('span', null, question); q.hidden = true; q.style.fontWeight = '600';
+    var yes = el('button', 'btn small', yesLabel); yes.type = 'button'; yes.hidden = true;
+    var no = el('button', 'btn plain small', 'Cancel'); no.type = 'button'; no.hidden = true;
+    function flip(asking) { first.hidden = asking; q.hidden = yes.hidden = no.hidden = !asking; }
+    first.addEventListener('click', function () { flip(true); });
+    no.addEventListener('click', function () { flip(false); });
+    yes.addEventListener('click', function () { onYes(yes); });
+    box.append(first, q, yes, no);
+    return box;
+  }
+
+  function render(data) {
+    var panel = $('drawPanel'), list = $('people'), n = data.people.length;
+    panel.textContent = ''; list.textContent = '';
+
+    if (!data.drawn) {
+      panel.append(el('strong', null, n + (n === 1 ? ' person' : ' people') + ' signed up'));
+      if (n < data.minPeople) {
+        panel.append(el('span', 'soft', 'You need at least ' + data.minPeople + ' people before you can draw names.'));
+      } else {
+        panel.append(el('span', 'soft', 'Drawing closes sign-ups and emails each person the name they drew. You will not see who drew whom.'));
+        panel.append(confirmBtn('Draw names and send emails', '', 'Draw now for ' + n + ' people?', 'Yes, draw names', function (b) {
+          act(b, 'Drawing and emailing…', 'adminDraw', [], function (d) {
+            var sent = d.people.filter(function (p) { return p.emailed; }).length;
+            return 'Names drawn. ' + sent + ' of ' + d.people.length + ' emails sent.';
+          });
+        }));
+      }
+    } else {
+      var sent = data.people.filter(function (p) { return p.emailed; }).length;
+      var wantText = data.people.filter(function (p) { return p.texted !== null && p.texted !== undefined; });
+      var texted = wantText.filter(function (p) { return p.texted; }).length;
+      panel.append(el('strong', null, 'Names were drawn on ' + new Date(data.drawnAt).toLocaleString()));
+      panel.append(el('span', 'soft', sent + ' of ' + n + ' emails sent' +
+        (wantText.length ? ', ' + texted + ' of ' + wantText.length + ' texts sent' : '') + '. Sign-ups are closed.'));
+      if (sent < n || texted < wantText.length) {
+        var again = el('button', 'btn small', 'Send the ones that failed'); again.type = 'button';
+        again.addEventListener('click', function () { act(again, 'Sending…', 'adminResend', [null], 'Tried the failed ones again.'); });
+        panel.append(el('div', 'row')); panel.lastChild.append(again);
+      }
+      panel.append(confirmBtn('Reset the draw', 'plain small',
+        'This throws out the draw and reopens sign-ups. Emails already sent stay in inboxes.', 'Yes, reset', function (b) {
+          act(b, 'Resetting…', 'adminReset', [], 'Draw reset. Sign-ups are open again.');
+        }));
+    }
+
+    if (!n) list.append(el('p', 'soft', 'No sign-ups yet. Share the link to get names in the hat.'));
+    data.people.forEach(function (p) {
+      var card = el('div', 'person');
+      var head = el('div', 'row'); head.append(el('h3', null, p.name));
+      if (data.drawn) head.append(el('span', 'badge' + (p.emailed ? '' : ' bad'), p.emailed ? 'Emailed' : 'Email failed'));
+      if (data.drawn && (p.texted === true || p.texted === false)) head.append(el('span', 'badge' + (p.texted ? '' : ' bad'), p.texted ? 'Texted' : 'Text failed'));
+      card.append(head, el('div', 'mail', p.email + (p.phone ? ' · ' + p.phone : '')));
+      var dl = el('dl');
+      [['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
+        .forEach(function (r) { dl.append(el('dt', null, r[0]), el('dd', null, r[1])); });
+      card.append(dl);
+      if (data.drawn) {
+        var re = el('button', 'btn plain small', 'Send theirs again'); re.type = 'button';
+        re.addEventListener('click', function () { act(re, 'Sending…', 'adminResend', [p.id], 'Sent ' + p.name + "'s draw again."); });
+        var r1 = el('div', 'row'); r1.append(re); card.append(r1);
+      } else {
+        card.append(confirmBtn('Remove', 'plain small', 'Remove ' + p.name + '?', 'Yes, remove', function (b) {
+          act(b, 'Removing…', 'adminDelete', [p.id], p.name + ' was removed.');
+        }));
+      }
+      list.append(card);
+    });
+    if (n) list.append(confirmBtn('Delete everyone and start a new event', 'plain small', 'This permanently deletes all ' + n + ' sign-ups' + (data.drawn ? ' and the draw' : '') + '. It cannot be undone.', 'Yes, delete all', function (b) { act(b, 'Deleting…', 'adminClearAll', [], 'Everyone was removed. Ready for a new event.'); }));
+  }
+
+  /* ---- Personal result page ---- */
+  function showResult(code) {
+    go('result');
+    api('getResult', code).then(function (r) {
+      $('eventName').textContent = r.eventName; document.title = r.eventName;
+      $('resultHowdy').textContent = 'Howdy ' + r.giver + ', you are the Secret Santa for';
+      $('resultName').textContent = r.name;
+      $('resultMin').textContent = '$' + r.min; $('resultMax').textContent = '$' + r.max;
+      show($('resultDetails'), r.details);
+      $('resultAboutTitle').textContent = 'About ' + r.name;
+      var dl = $('resultAbout'); dl.textContent = '';
+      [['T-shirt size', r.shirt], ['Pants size', r.pants], ['Shoe size', r.shoes], ['Favorite colors', r.colors],
+        ['Favorite food', r.food], ['Hobbies, games, console', r.hobbies]]
+        .forEach(function (row) { dl.append(el('dt', null, row[0]), el('dd', null, row[1])); });
+      var ul = $('resultIdeas'); ul.textContent = '';
+      (r.ideas || []).forEach(function (idea) {
+        if (String(idea.url).indexOf('https://') !== 0) return;
+        var li = el('li'), a = el('a', null, 'Shop on Amazon');
+        a.href = idea.url; a.target = '_blank'; a.rel = 'noopener';
+        li.append(el('span', null, idea.label), a); ul.append(li);
+      });
+      $('resultWait').hidden = true; $('resultBody').hidden = false;
+    }).catch(function (e) { $('resultWait').hidden = true; show($('resultErr'), e.message); });
+  }
+
+  $('previewBar').hidden = live || remote;
+  var myCode = '';
+  try { myCode = new URLSearchParams(location.search).get('c') || ''; } catch (e) { myCode = ''; }
+  if (myCode) showResult(myCode); else loadStatus();
+})();
+</script>
+</body>
+</html>
