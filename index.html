@@ -5,23 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>Secret Santa</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Bitter:wght@400;600;700&family=Caveat:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600&display=swap">
 <style>
-/* Layout: a kraft-paper notice pinned to a barn-wood wall, under a buffalo-plaid band. */
+/* Layout: a gold-edged card glowing against a snowy Christmas-night sky, under a candy-cane ribbon. */
 :root {
-  --wood: #3b2a1e;
-  --wood-seam: #2a1d14;
-  --paper: #f3e6cd;
-  --paper-deep: #e6d3b0;
-  --cream: #fcf7ec;
-  --barn: #8e2a23;
-  --barn-dark: #6f1f1a;
-  --pine: #2e4a3a;
-  --ink: #2b2320;
-  --ink-soft: #6d5740;
-  --twine: #b08b57;
-  --display: 'Rye', 'Rockwell', Georgia, serif;
-  --body: 'Bitter', Georgia, 'Times New Roman', serif;
+  --night: #12264a;
+  --night-deep: #0a1731;
+  --card: #fffaf0;
+  --card-shade: #f3e8d2;
+  --cream: #fffdf8;
+  --red: #c0262d;
+  --red-deep: #981c23;
+  --pine: #1c6646;
+  --ink: #26303f;
+  --ink-soft: #5c6577;
+  --gold: #cf9f2e;
+  --display: 'Mountains of Christmas', 'Georgia', serif;
+  --body: 'Nunito', 'Segoe UI', Arial, sans-serif;
   --hand: 'Caveat', 'Segoe Print', cursive;
 }
 * { box-sizing: border-box; }
@@ -32,65 +32,81 @@ body {
   font-size: 17px;
   line-height: 1.55;
   color: var(--ink);
-  background-color: var(--wood);
+  background-color: var(--night-deep);
   background-image:
-    repeating-linear-gradient(90deg, transparent 0 118px, var(--wood-seam) 118px 121px),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px);
+    radial-gradient(ellipse 90% 55% at 50% 0%, #2a4f8c 0%, transparent 70%),
+    linear-gradient(var(--night), var(--night-deep));
+  background-attachment: fixed;
   min-height: 100vh;
+}
+/* Falling snow: one tile of soft dots that drifts down and loops. */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .85;
+  background-image:
+    radial-gradient(2px 2px at 24px 30px, #fff, transparent),
+    radial-gradient(3px 3px at 118px 84px, rgba(255,255,255,.9), transparent),
+    radial-gradient(2px 2px at 190px 150px, rgba(255,255,255,.75), transparent),
+    radial-gradient(1.5px 1.5px at 66px 178px, rgba(255,255,255,.7), transparent),
+    radial-gradient(2.5px 2.5px at 236px 46px, rgba(255,255,255,.85), transparent),
+    radial-gradient(1.5px 1.5px at 150px 12px, rgba(255,220,140,.9), transparent);
+  background-size: 270px 220px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body::before { animation: snow 16s linear infinite; }
+  @keyframes snow { to { background-position: 40px 220px; } }
 }
 [hidden] { display: none !important; }
 
-.plaid {
-  height: 56px;
-  background-color: var(--barn);
-  background-image:
-    repeating-linear-gradient(0deg, rgba(20,12,10,.55) 0 14px, transparent 14px 28px),
-    repeating-linear-gradient(90deg, rgba(20,12,10,.55) 0 14px, transparent 14px 28px);
-  border-bottom: 3px solid var(--wood-seam);
+.ribbon {
+  position: relative; z-index: 1; height: 20px;
+  background: repeating-linear-gradient(-45deg, var(--red) 0 14px, #fff 14px 28px);
+  box-shadow: 0 3px 10px rgba(0,0,0,.4);
 }
 .wrap {
+  position: relative; z-index: 1;
   max-width: 660px;
   margin: 0 auto;
   padding: 0 16px 48px;
 }
 .notice {
   position: relative;
-  margin-top: -18px;
-  background: var(--paper);
-  background-image: radial-gradient(rgba(120,90,50,.07) 1px, transparent 1px);
-  background-size: 5px 5px;
-  border-radius: 4px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.45);
-  padding: 34px 28px 30px;
+  margin-top: 30px;
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 18px;
+  box-shadow: 0 0 0 6px rgba(207,159,46,.18), 0 0 60px rgba(255,220,150,.18), 0 16px 40px rgba(0,0,0,.5);
+  padding: 30px 28px 30px;
 }
-.notice::before, .notice::after { /* nail heads */
-  content: ""; position: absolute; top: 12px; width: 11px; height: 11px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #9a9189, #3d3833);
-}
-.notice::before { left: 14px; } .notice::after { right: 14px; }
 
 header { text-align: center; }
-.sprig { width: 74px; height: 46px; color: var(--pine); }
+.sprig { width: 128px; height: 92px; color: var(--pine); }
+@media (prefers-reduced-motion: no-preference) {
+  .sprig .twinkle { animation: twinkle 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  .sprig .twinkle:nth-of-type(2n) { animation-delay: 1.2s; }
+  @keyframes twinkle { 50% { opacity: .35; transform: scale(.8); } }
+}
 h1 {
-  font-family: var(--display); font-weight: 400; color: var(--barn);
-  font-size: clamp(2.1rem, 8vw, 3.2rem); line-height: 1.1; margin: 4px 0 6px;
+  font-family: var(--display); font-weight: 700; color: var(--red);
+  font-size: clamp(2.5rem, 10vw, 3.8rem); line-height: 1.05; margin: 0 0 4px;
   text-wrap: balance; overflow-wrap: anywhere;
 }
 .tagline { font-family: var(--hand); font-size: 1.6rem; color: var(--pine); margin: 0; line-height: 1.2; }
 .rule {
-  border: 0; height: 10px; margin: 22px 0;
-  background: repeating-linear-gradient(90deg, var(--twine) 0 9px, transparent 9px 15px) center / 100% 2px no-repeat;
+  border: 0; height: 14px; margin: 20px 0;
+  background:
+    radial-gradient(circle, var(--gold) 3px, transparent 4px) center / 14px 14px no-repeat,
+    linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 44%, transparent 46%, transparent 54%, var(--gold) 56%, var(--gold) 80%, transparent) center / 100% 2px no-repeat;
 }
-h2 { font-family: var(--display); font-weight: 400; font-size: 1.45rem; color: var(--pine); margin: 0 0 6px; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; color: var(--pine); margin: 0 0 6px; text-wrap: balance; }
 p { margin: 0 0 14px; }
 .soft { color: var(--ink-soft); font-size: .95rem; }
 
 .steps { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0 0 22px; }
 .steps li {
   flex: 1; min-width: 0; text-align: center; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
-  padding: 7px 4px; border-bottom: 3px solid var(--paper-deep); color: var(--ink-soft);
+  padding: 7px 4px; border-bottom: 3px solid var(--card-shade); color: var(--ink-soft);
 }
-.steps li.on { border-color: var(--barn); color: var(--barn); font-weight: 700; }
+.steps li.on { border-color: var(--red); color: var(--red); font-weight: 700; }
 
 form { display: grid; gap: 16px; }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
@@ -98,82 +114,92 @@ label { display: grid; gap: 5px; font-weight: 600; font-size: .95rem; min-width:
 label small { font-weight: 400; color: var(--ink-soft); }
 input[type=text], input[type=email], input[type=tel], input[type=password], select, textarea {
   font: inherit; color: var(--ink); background: var(--cream);
-  border: 1px solid var(--twine); border-bottom-width: 3px; border-radius: 3px;
+  border: 1.5px solid #dcc790; border-radius: 10px;
   padding: 10px 12px; width: 100%; min-width: 0;
 }
 textarea { min-height: 84px; resize: vertical; }
 :focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; }
 fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; }
-legend { font-family: var(--hand); font-size: 1.45rem; color: var(--barn); padding: 0; margin-bottom: 4px; }
+legend { font-family: var(--hand); font-size: 1.45rem; color: var(--red); padding: 0; margin-bottom: 4px; }
 
 .btn {
-  font: inherit; font-weight: 700; cursor: pointer; color: var(--cream); background: var(--barn);
-  border: 0; border-radius: 4px; padding: 12px 22px;
-  outline: 1px dashed rgba(252,247,236,.6); outline-offset: -5px; /* stitched edge */
+  font: inherit; font-weight: 700; cursor: pointer; color: var(--cream); background: var(--red);
+  border: 0; border-radius: 999px; padding: 12px 26px;
+  box-shadow: 0 3px 0 var(--red-deep), 0 6px 14px rgba(152,28,35,.3);
 }
-.btn:hover { background: var(--barn-dark); }
+.btn.plain, .btn.pine { box-shadow: none; }
+.btn:hover { background: var(--red-deep); }
 .btn:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 .btn.pine { background: var(--pine); }
-.btn.plain { background: transparent; color: var(--barn); outline: 0; text-decoration: underline; padding: 12px 8px; }
+.btn.plain { background: transparent; color: var(--red); outline: 0; text-decoration: underline; padding: 12px 8px; }
 .btn.small { padding: 7px 12px; font-size: .88rem; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .center { justify-content: center; }
 
 .msg { padding: 11px 14px; border-radius: 4px; font-size: .95rem; margin: 0; }
-.msg.err { background: #f2d3cb; border-left: 5px solid var(--barn); }
+.msg.err { background: #f2d3cb; border-left: 5px solid var(--red); }
 .msg.ok { background: #d5e2d2; border-left: 5px solid var(--pine); }
 
 .rules { counter-reset: r; list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 10px; }
-.rules li { background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 12px 14px; }
-.rules li strong { color: var(--barn); }
+.rules li { background: var(--cream); border: 1px solid var(--card-shade); border-radius: 4px; padding: 12px 14px; }
+.rules li strong { color: var(--red); }
 .budget {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 34px; text-align: center;
   background: var(--pine); color: var(--cream); border-radius: 4px; padding: 16px; margin: 0 0 14px;
 }
-.budget b { display: block; font-family: var(--display); font-weight: 400; font-size: 2rem; line-height: 1.1; }
+.budget b { display: block; font-family: var(--display); font-weight: 700; font-size: 2.3rem; line-height: 1.1; color: #ffe9a8; }
 .budget span { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
-.accept { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; background: var(--paper-deep); padding: 14px; border-radius: 4px; }
-.accept input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--barn); }
+.accept { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; background: var(--card-shade); padding: 14px; border-radius: 4px; }
+.accept input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--red); }
 
-.count { font-family: var(--hand); font-size: 1.5rem; color: var(--barn); text-align: center; margin: 0 0 14px; }
+.count { font-family: var(--hand); font-size: 1.5rem; color: var(--red); text-align: center; margin: 0 0 14px; }
 .how { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 8px; }
 .how li { padding-left: 26px; position: relative; }
-.how li::before { content: "\2605"; position: absolute; left: 2px; color: var(--twine); }
+.how li::before { content: "\2605"; position: absolute; left: 2px; color: var(--gold); }
 
-.person { background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 12px 14px; display: grid; gap: 6px; }
+.person { background: var(--cream); border: 1px solid var(--card-shade); border-radius: 4px; padding: 12px 14px; display: grid; gap: 6px; }
 .person h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
 .person .mail { color: var(--ink-soft); font-size: .9rem; overflow-wrap: anywhere; }
 .person dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .88rem; }
 .person dt { color: var(--ink-soft); } .person dd { margin: 0; overflow-wrap: anywhere; }
 .people { display: grid; gap: 10px; margin: 14px 0; }
 .badge { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--pine); color: var(--cream); }
-.badge.bad { background: var(--barn); }
+.badge.bad { background: var(--red); }
 .drew { text-align: center; margin: 0 0 16px; }
-.drew b { display: block; font-family: var(--display); font-weight: 400; color: var(--barn); font-size: clamp(2rem, 9vw, 3rem); line-height: 1.15; overflow-wrap: anywhere; }
-.about { margin: 0 0 18px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; background: var(--cream); border: 1px solid var(--paper-deep); border-radius: 4px; padding: 14px; }
+.drew b { display: block; font-family: var(--display); font-weight: 700; color: var(--red); font-size: clamp(2rem, 9vw, 3rem); line-height: 1.15; overflow-wrap: anywhere; }
+.about { margin: 0 0 18px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; background: var(--cream); border: 1px solid var(--card-shade); border-radius: 4px; padding: 14px; }
 .about dt { color: var(--ink-soft); font-size: .9rem; } .about dd { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
 .ideas { list-style: none; padding: 0; margin: 0 0 18px; }
-.ideas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px dashed var(--twine); }
-.ideas a { color: var(--barn); font-weight: 700; white-space: nowrap; }
-.panel { background: var(--paper-deep); border-radius: 4px; padding: 14px; display: grid; gap: 10px; }
+.ideas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px dashed var(--gold); }
+.ideas a { color: var(--red); font-weight: 700; white-space: nowrap; }
+.panel { background: var(--card-shade); border-radius: 4px; padding: 14px; display: grid; gap: 10px; }
 footer { text-align: center; margin-top: 18px; }
-footer button { font: inherit; font-size: .85rem; background: none; border: 0; color: #cbb89a; text-decoration: underline; cursor: pointer; padding: 8px; }
-.preview { background: #f7e7a6; color: #3b2a1e; text-align: center; font-size: .85rem; padding: 6px 12px; }
+footer button { font: inherit; font-size: .85rem; background: none; border: 0; color: #d9e2f5; text-decoration: underline; cursor: pointer; padding: 8px; }
+.preview { position: relative; z-index: 1; background: #f7e7a6; color: #26303f; text-align: center; font-size: .85rem; padding: 6px 12px; }
+footer { position: relative; z-index: 1; }
 @media (max-width: 480px) { .notice { padding: 30px 18px 24px; } }
 @media (prefers-reduced-motion: no-preference) { .view { animation: in .25s ease-out; } @keyframes in { from { opacity: .4; transform: translateY(4px); } } }
 </style>
 </head>
 <body>
 <div class="preview" id="previewBar" hidden>Preview mode: nothing here is saved or emailed. The admin password in preview is "preview".</div>
-<div class="plaid"></div>
+<div class="ribbon"></div>
 <div class="wrap">
   <main class="notice">
     <header>
-      <svg class="sprig" viewBox="0 0 74 46" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-        <path d="M37 44V8M37 14l-9-7M37 14l9-7M37 22l-12-8M37 22l12-8M37 30l-14-8M37 30l14-8M37 38l-12-6M37 38l12-6"/>
-        <circle cx="37" cy="5" r="3" fill="#8e2a23" stroke="none"/>
-        <path d="M6 40c8-2 14-2 22 0M46 40c8-2 14-2 22 0" stroke="#b08b57"/>
+      <svg class="sprig" viewBox="0 0 92 66" aria-hidden="true">
+        <rect x="42" y="52" width="8" height="9" rx="1.5" fill="#7a4a24"/>
+        <path d="M46 12 30 30h8L24 44h10L20 56h52L58 44h10L54 30h8Z" fill="currentColor"/>
+        <path d="M46 2l2.6 5.6 6.1.7-4.5 4.2 1.2 6L46 15.500l-5.400 3 1.200-6-4.500-4.200 6.100-.7Z" fill="#f2c14e"/>
+        <circle class="twinkle" cx="40" cy="30" r="2.600" fill="#f2c14e"/>
+        <circle class="twinkle" cx="54" cy="38" r="2.600" fill="#e2434b"/>
+        <circle class="twinkle" cx="36" cy="46" r="2.600" fill="#e2434b"/>
+        <circle class="twinkle" cx="50" cy="50" r="2.600" fill="#f2c14e"/>
+        <circle class="twinkle" cx="62" cy="51" r="2.600" fill="#ffffff"/>
+        <path class="twinkle" d="M10 14l1.500 4 4 1.500-4 1.500-1.500 4-1.500-4-4-1.500 4-1.500Z" fill="#f2c14e"/>
+        <path class="twinkle" d="M80 22l1.200 3.200 3.200 1.200-3.200 1.200L80 31l-1.200-3.200-3.200-1.200 3.200-1.200Z" fill="#f2c14e"/>
+        <path d="M6 62c10-4 20-4 30-1 8 2.400 14 2.400 22 0 10-3 18-3 28 1" fill="none" stroke="#c9d6ea" stroke-width="2.400" stroke-linecap="round"/>
       </svg>
       <h1 id="eventName">Secret Santa</h1>
       <p class="tagline">'tis the season for giving</p>
@@ -189,6 +215,7 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
           <li>Read the rules and agree to them.</li>
           <li>When names are drawn, you get an email with the person you're buying for and gift ideas picked from their answers.</li>
           <li>Everyone who signs up gives one gift and gets one gift. Nobody but you sees who you drew.</li>
+          <li>People in the same household never draw each other.</li>
         </ul>
         <div class="row center"><button class="btn" id="startBtn" type="button">Put my name in</button></div>
       </div>
@@ -208,6 +235,9 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
           <p class="soft" style="margin:-8px 0 0">Your draw is emailed here, so double-check it.</p>
           <label for="f-phone" id="phoneWrap" hidden>Mobile number <small>optional. Add it to also get your draw by text (US numbers).</small>
             <input id="f-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="555-123-4567"></label>
+          <label for="f-household">Household <small>People with the same household name never draw each other. Pick yours from the list if someone in your home already signed up, or type a new one.</small>
+            <input id="f-household" type="text" maxlength="60" list="houseList" autocomplete="off" placeholder="Wilson house" required></label>
+          <datalist id="houseList"></datalist>
         </fieldset>
         <fieldset>
           <legend>Your sizes</legend>
@@ -332,7 +362,8 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
     }
     function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
     return {
-      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true }; },
+      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true,
+        households: people.map(function (p) { return p.household; }).filter(function (h, i, a) { return h && a.indexOf(h) === i; }) }; },
       signUp: function (f) {
         if (draw) throw new Error('Sign-ups are closed. Names have already been drawn.');
         if (people.some(function (p) { return p.email === f.email.toLowerCase(); })) throw new Error('That email address is already signed up.');
@@ -351,6 +382,7 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
       adminDraw: function (pw) { admin(pw); if (people.length < 3) throw new Error('You need at least 3 people signed up to draw names.'); draw = new Date().toISOString(); return list(); },
       adminResend: function (pw) { admin(pw); return list(); },
       adminReset: function (pw) { admin(pw); draw = null; return list(); },
+      adminSetHousehold: function (pw, id, h) { admin(pw); people.forEach(function (p) { if (p.id === id) p.household = String(h).trim(); }); return list(); },
       adminClearAll: function (pw) { admin(pw); people = []; draw = null; return list(); }
     };
   })();
@@ -408,6 +440,8 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
       document.querySelectorAll('[data-max]').forEach(function (n) { n.textContent = max; });
       show($('detailsLine'), s.details);
       $('phoneWrap').hidden = !s.texts;
+      var houses = $('houseList'); houses.textContent = '';
+      (s.households || []).forEach(function (h) { var o = document.createElement('option'); o.value = h; houses.append(o); });
       $('count').textContent = s.count === 0 ? 'The hat is empty. Be the first name in!'
         : s.count === 1 ? '1 name in the hat so far' : s.count + ' names in the hat so far';
       $('homeOpen').hidden = s.drawn; $('homeClosed').hidden = !s.drawn;
@@ -416,7 +450,7 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
   $('startBtn').addEventListener('click', function () { go('form'); $('f-name').focus(); });
 
   /* ---- Sign-up ---- */
-  var fields = ['name', 'email', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+  var fields = ['name', 'email', 'household', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
   function readForm() {
     var d = {};
     fields.forEach(function (f) { d[f] = $('f-' + f).value.trim(); });
@@ -495,7 +529,7 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
       if (n < data.minPeople) {
         panel.append(el('span', 'soft', 'You need at least ' + data.minPeople + ' people before you can draw names.'));
       } else {
-        panel.append(el('span', 'soft', 'Drawing closes sign-ups and emails each person the name they drew. You will not see who drew whom.'));
+        panel.append(el('span', 'soft', 'Drawing closes sign-ups and emails each person the name they drew. You will not see who drew whom. People who share a household name never draw each other, so check the household on each card first.'));
         panel.append(confirmBtn('Draw names and send emails', '', 'Draw now for ' + n + ' people?', 'Yes, draw names', function (b) {
           act(b, 'Drawing and emailing…', 'adminDraw', [], function (d) {
             var sent = d.people.filter(function (p) { return p.emailed; }).length;
@@ -529,9 +563,21 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
       if (data.drawn && (p.texted === true || p.texted === false)) head.append(el('span', 'badge' + (p.texted ? '' : ' bad'), p.texted ? 'Texted' : 'Text failed'));
       card.append(head, el('div', 'mail', p.email + (p.phone ? ' · ' + p.phone : '')));
       var dl = el('dl');
-      [['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
+      [['Household', p.household || 'None set (on their own)'], ['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
         .forEach(function (r) { dl.append(el('dt', null, r[0]), el('dd', null, r[1])); });
       card.append(dl);
+      if (!data.drawn) {
+        var houseRow = el('div', 'row');
+        var change = el('button', 'btn plain small', 'Change household'); change.type = 'button';
+        change.addEventListener('click', function () {
+          var input = el('input'); input.type = 'text'; input.maxLength = 60; input.value = p.household || '';
+          input.setAttribute('aria-label', 'Household for ' + p.name); input.setAttribute('list', 'houseList'); input.style.maxWidth = '15rem';
+          var save = el('button', 'btn small', 'Save'); save.type = 'button';
+          save.addEventListener('click', function () { act(save, 'Saving…', 'adminSetHousehold', [p.id, input.value], p.name + "'s household was updated."); });
+          houseRow.textContent = ''; houseRow.append(input, save); input.focus();
+        });
+        houseRow.append(change); card.append(houseRow);
+      }
       if (data.drawn) {
         var re = el('button', 'btn plain small', 'Send theirs again'); re.type = 'button';
         re.addEventListener('click', function () { act(re, 'Sending…', 'adminResend', [p.id], 'Sent ' + p.name + "'s draw again."); });
@@ -551,7 +597,7 @@ footer button { font: inherit; font-size: .85rem; background: none; border: 0; c
     go('result');
     api('getResult', code).then(function (r) {
       $('eventName').textContent = r.eventName; document.title = r.eventName;
-      $('resultHowdy').textContent = 'Howdy ' + r.giver + ', you are the Secret Santa for';
+      $('resultHowdy').textContent = 'Secret Santa ' + r.giver + ', you are buying for';
       $('resultName').textContent = r.name;
       $('resultMin').textContent = '$' + r.min; $('resultMax').textContent = '$' + r.max;
       show($('resultDetails'), r.details);
