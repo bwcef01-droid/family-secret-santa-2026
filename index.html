@@ -219,7 +219,22 @@ footer { position: relative; z-index: 1; }
         </ul>
         <div class="row center"><button class="btn" id="startBtn" type="button">Put my name in</button></div>
       </div>
-      <p class="msg ok" id="homeClosed" hidden>Names have been drawn and sign-ups are closed. If you signed up, check your email (and your spam folder) for the person you drew.</p>
+      <p class="msg ok" id="homeClosed" hidden>Names have been drawn and sign-ups are closed. If you signed up, check your email (and your spam folder) or your texts for the person you drew.</p>
+      <div class="row center" style="margin-top:16px"><button class="btn pine" type="button" data-go="lookup">Already drawn? See my draw</button></div>
+    </section>
+
+    <!-- See my draw: the 4-digit code from the text or email -->
+    <section class="view" id="v-lookup" hidden>
+      <h2>See my draw</h2>
+      <p class="soft">Enter the 4-digit code from your text or email.</p>
+      <form id="lookupForm" novalidate>
+        <label for="l-pin">4-digit code <input id="l-pin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="1234" style="max-width:9rem;letter-spacing:.3em;font-weight:700" required></label>
+        <p class="msg err" id="lookupErr" hidden></p>
+        <div class="row">
+          <button class="btn" type="submit">Show my draw</button>
+          <button class="btn plain" type="button" data-go="home">Back</button>
+        </div>
+      </form>
     </section>
 
     <!-- Step 1 -->
@@ -344,6 +359,7 @@ footer { position: relative; z-index: 1; }
             <button class="btn small" id="textTestBtn" type="button">Send test text</button>
           </div>
           <p class="msg" id="textTestMsg" hidden></p>
+          <strong id="textCredits" hidden></strong>
         </div>
         <div class="row"><button class="btn plain" type="button" data-go="home">Leave the desk</button></div>
       </div>
@@ -366,7 +382,7 @@ footer { position: relative; z-index: 1; }
   var mock = (function () {
     var people = [], draw = null, n = 0;
     function list() {
-      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true,
+      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true, textCredits: 188,
         people: people.map(function (p) { return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null }, p); }) };
     }
     function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
@@ -378,6 +394,10 @@ footer { position: relative; z-index: 1; }
         if (people.some(function (p) { return p.email === f.email.toLowerCase(); })) throw new Error('That email address is already signed up.');
         var p = Object.assign({}, f, { id: 'm' + (++n), email: f.email.toLowerCase() }); delete p.accepted; people.push(p);
         return { ok: true, name: f.name };
+      },
+      getResultByPin: function (pin) {
+        if (pin !== '1234') throw new Error('That code does not match a draw. Check the code in your text or email and try again.');
+        return mock.getResult('sample');
       },
       getResult: function (code) {
         if (code !== 'sample') throw new Error('This result link is not valid. Names may have been drawn again, so check for a newer email or text.');
@@ -427,7 +447,7 @@ footer { position: relative; z-index: 1; }
   }
 
   /* ---- Views ---- */
-  var views = ['home', 'form', 'rules', 'done', 'result', 'admin'];
+  var views = ['home', 'form', 'rules', 'done', 'lookup', 'result', 'admin'];
   function go(name) {
     views.forEach(function (v) { $('v-' + v).hidden = v !== name; });
     if (name === 'home') loadStatus();
@@ -544,6 +564,10 @@ footer { position: relative; z-index: 1; }
     var panel = $('drawPanel'), list = $('people'), n = data.people.length;
     panel.textContent = ''; list.textContent = '';
     $('textTest').hidden = !data.textsOn;
+    var withPhone = data.people.filter(function (p) { return p.phone; }).length;
+    show($('textCredits'), typeof data.textCredits === 'number'
+      ? 'Text credits left: ' + data.textCredits + (data.textCredits < withPhone ? '. That is fewer than the ' + withPhone + ' people who asked for a text, so buy more before drawing.' : '')
+      : (data.textsOn ? 'Text credits left: could not be read right now.' : ''));
 
     if (!data.drawn) {
       panel.append(el('strong', null, n + (n === 1 ? ' person' : ' people') + ' signed up'));
@@ -614,9 +638,7 @@ footer { position: relative; z-index: 1; }
   }
 
   /* ---- Personal result page ---- */
-  function showResult(code) {
-    go('result');
-    api('getResult', code).then(function (r) {
+  function renderResult(r) {
       $('eventName').textContent = r.eventName; document.title = r.eventName;
       $('resultHowdy').textContent = 'Secret Santa ' + r.giver + ', you are buying for';
       $('resultName').textContent = r.name;
@@ -634,9 +656,28 @@ footer { position: relative; z-index: 1; }
         a.href = idea.url; a.target = '_blank'; a.rel = 'noopener';
         li.append(el('span', null, idea.label), a); ul.append(li);
       });
+      show($('resultErr'), '');
       $('resultWait').hidden = true; $('resultBody').hidden = false;
-    }).catch(function (e) { $('resultWait').hidden = true; show($('resultErr'), e.message); });
   }
+
+  /* Opened from the private link in an email or text. */
+  function showResult(code) {
+    go('result');
+    api('getResult', code).then(renderResult)
+      .catch(function (e) { $('resultWait').hidden = true; show($('resultErr'), e.message); });
+  }
+
+  /* "See my draw": the 4-digit code typed in on the site. */
+  $('lookupForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = this.querySelector('button[type=submit]'), pin = $('l-pin').value.replace(/\D/g, '');
+    if (pin.length !== 4) { show($('lookupErr'), 'Please enter the 4-digit code from your text or email.'); return; }
+    show($('lookupErr'), ''); busy(btn, true, 'Looking…');
+    api('getResultByPin', pin).then(function (r) {
+      busy(btn, false); $('l-pin').value = '';
+      renderResult(r); go('result');
+    }).catch(function (e2) { busy(btn, false); show($('lookupErr'), e2.message); });
+  });
 
   $('previewBar').hidden = live || remote;
   var myCode = '';
