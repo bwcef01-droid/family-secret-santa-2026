@@ -294,7 +294,7 @@ footer { position: relative; z-index: 1; }
           <label for="f-colors">Favorite colors <input id="f-colors" type="text" maxlength="120" placeholder="forest green, navy" required></label>
           <label for="f-food">Favorite food <small>snacks, sweets and treats count</small>
             <input id="f-food" type="text" maxlength="160" placeholder="beef jerky, dark chocolate" required></label>
-          <label for="f-hobbies">Hobbies, games and gaming console <small>separate with commas</small>
+          <label for="f-hobbies">Hobbies &amp; Interests <small>separate with commas</small>
             <textarea id="f-hobbies" maxlength="300" placeholder="fishing, board games, Xbox" required></textarea></label>
         </fieldset>
         <p class="msg err" id="formErr" hidden></p>
@@ -656,7 +656,7 @@ footer { position: relative; z-index: 1; }
       if (data.drawn && (p.texted === true || p.texted === false)) head.append(el('span', 'badge' + (p.texted ? '' : ' bad'), p.texted ? 'Texted' : 'Text failed'));
       card.append(head, el('div', 'mail', p.email + (p.phone ? ' · ' + p.phone : '')));
       var dl = el('dl');
-      [['Will not draw', (p.apart || []).length ? p.apart.join(', ') : 'Nobody set (can draw anyone)'], ['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
+      [['Will not draw', (p.apart || []).length ? p.apart.join(', ') : 'Nobody set (can draw anyone)'], ['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies & Interests', p.hobbies]]
         .forEach(function (r) { dl.append(el('dt', null, r[0]), el('dd', null, r[1])); });
       card.append(dl);
       if (!data.drawn && (p.unmatched || []).length) {
@@ -700,7 +700,7 @@ footer { position: relative; z-index: 1; }
       $('resultAboutTitle').textContent = 'About ' + r.name;
       var dl = $('resultAbout'); dl.textContent = '';
       [['T-shirt size', r.shirt], ['Pants size', r.pants], ['Shoe size', r.shoes], ['Favorite colors', r.colors],
-        ['Favorite food', r.food], ['Hobbies, games, console', r.hobbies]]
+        ['Favorite food', r.food], ['Hobbies & Interests', r.hobbies]]
         .forEach(function (row) { dl.append(el('dt', null, row[0]), el('dd', null, row[1])); });
       var ul = $('resultIdeas'); ul.textContent = '';
       (r.ideas || []).forEach(function (idea) {
