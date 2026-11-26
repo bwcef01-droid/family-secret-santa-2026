@@ -283,10 +283,11 @@ footer { position: relative; z-index: 1; }
         <fieldset>
           <legend>Who are you?</legend>
           <div class="pair">
-            <label for="f-name">First and last name <input id="f-name" type="text" maxlength="80" autocomplete="name" required></label>
-            <label for="f-email">Email <input id="f-email" type="email" maxlength="120" autocomplete="email" required></label>
+            <label for="f-first">First name <input id="f-first" type="text" maxlength="40" autocomplete="given-name" required></label>
+            <label for="f-last">Last name <input id="f-last" type="text" maxlength="40" autocomplete="family-name" required></label>
           </div>
-          <p class="soft" style="margin:-8px 0 0">Your draw is emailed here, so double-check it.</p>
+          <label for="f-email">Email <small>your draw is emailed here, so double-check it</small>
+            <input id="f-email" type="email" maxlength="120" autocomplete="email" required></label>
           <label for="f-phone" id="phoneWrap" hidden>Mobile number <small>optional. Add it to also get your draw by text (US numbers).</small>
             <input id="f-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="555-123-4567"></label>
         </fieldset>
@@ -367,7 +368,7 @@ footer { position: relative; z-index: 1; }
     <section class="view" id="v-done" hidden>
       <ol class="steps"><li>1 &middot; About you</li><li>2 &middot; The rules</li><li class="on">3 &middot; You're in</li></ol>
       <h2 id="doneTitle">You're in!</h2>
-      <p>Your name is in the hat. When the organizer draws names, you'll get an email telling you who you're buying for, with their sizes, favorites and a list of Amazon gift ideas.</p>
+      <p>Your name is in the hat. When the organizer draws names, you'll get an email telling you who you're buying for, with their sizes, favorites and a list of gift ideas from Amazon and Walmart.</p>
       <p class="soft">Watch your inbox, and peek in spam if it doesn't show up.</p>
       <div class="row"><button class="btn pine" type="button" data-go="home">Back to the start</button></div>
     </section>
@@ -543,19 +544,25 @@ footer { position: relative; z-index: 1; }
       $('homeOpen').hidden = s.drawn; $('homeClosed').hidden = !s.drawn;
     }).catch(function () { $('count').textContent = 'Could not reach the sign-up sheet. Refresh to try again.'; });
   }
-  $('startBtn').addEventListener('click', function () { go('form'); $('f-name').focus(); });
+  $('startBtn').addEventListener('click', function () { go('form'); $('f-first').focus(); });
 
   /* ---- Sign-up ---- */
-  var fields = ['name', 'email', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+  var fields = ['email', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+  /* First and last name are asked separately and stored together as one full name. */
+  function fullName(first, last) { return (first.trim() + ' ' + last.trim()).replace(/\s+/g, ' ').trim(); }
 
-  /* Household question: yes/no, then how many, then one name box per housemate. */
+  /* Household question: yes/no, then how many, then a first and last name box per housemate. */
   function drawMateBoxes() {
     var want = Number($('f-mates').value), box = $('mateNames');
     while (box.children.length > want) box.lastChild.remove();
     while (box.children.length < want) {
-      var i = box.children.length + 1, label = el('label', null, 'First and last name of person ' + i + ' ');
-      var input = el('input'); input.type = 'text'; input.maxLength = 80; input.id = 'f-mate-' + i; input.autocomplete = 'off';
-      label.htmlFor = input.id; label.append(input); box.append(label);
+      var i = box.children.length + 1, pair = el('div', 'pair');
+      [['first', 'first name'], ['last', 'last name']].forEach(function (part) {
+        var label = el('label', null, 'Person ' + i + ' ' + part[1] + ' ');
+        var input = el('input'); input.type = 'text'; input.maxLength = 40; input.id = 'f-mate-' + i + '-' + part[0]; input.autocomplete = 'off';
+        label.htmlFor = input.id; label.append(input); pair.append(label);
+      });
+      box.append(pair);
     }
   }
   function showMates() { $('mateWrap').hidden = !$('f-live-yes').checked; if ($('f-live-yes').checked) drawMateBoxes(); }
@@ -565,17 +572,23 @@ footer { position: relative; z-index: 1; }
   $('signupForm').addEventListener('reset', function () { setTimeout(function () { $('mateNames').textContent = ''; showMates(); }, 0); });
   function readForm() {
     var d = {};
+    var first = $('f-first').value.trim(), last = $('f-last').value.trim();
+    d.name = first && last ? fullName(first, last) : '';
     fields.forEach(function (f) { d[f] = $('f-' + f).value.trim(); });
     d.phone = $('phoneWrap').hidden ? '' : $('f-phone').value.trim();
+    /* A housemate with either box left empty comes back as '' so the form can ask for it. */
     d.housemates = $('f-live-yes').checked
-      ? Array.prototype.map.call($('mateNames').querySelectorAll('input'), function (i) { return i.value.trim(); })
+      ? Array.prototype.map.call($('mateNames').children, function (pair) {
+          var boxes = pair.querySelectorAll('input'), f = boxes[0].value.trim(), l = boxes[1].value.trim();
+          return f && l ? fullName(f, l) : '';
+        })
       : [];
     return d;
   }
   $('signupForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var d = readForm(), err = '';
-    if (!d.name) err = 'Please enter your name.';
+    if (!d.name) err = 'Please enter both your first and last name.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) err = 'Please enter a valid email address.';
     else if (!$('f-live-yes').checked && !$('f-live-no').checked) err = 'Please answer whether you live with someone who is also taking part.';
     else if (d.housemates.some(function (m) { return !m; })) err = 'Please enter the first and last name of each person you live with, or lower the number.';
