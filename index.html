@@ -173,6 +173,12 @@ legend { font-family: var(--hand); font-size: 1.45rem; color: var(--red); paddin
 .ideas { list-style: none; padding: 0; margin: 0 0 18px; }
 .ideas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px dashed var(--gold); }
 .ideas a { color: var(--red); font-weight: 700; white-space: nowrap; }
+.choice { display: grid; gap: 8px; }
+.choice .q { font-weight: 600; font-size: .95rem; }
+.pick { display: flex; grid-template-columns: none; align-items: center; gap: 8px; font-weight: 700; cursor: pointer;
+  background: var(--cream); border: 1.5px solid #dcc790; border-radius: 999px; padding: 9px 20px; }
+.pick input { width: 20px; height: 20px; margin: 0; accent-color: var(--red); }
+.pick:has(input:checked) { border-color: var(--red); background: #fdeeee; }
 .panel { background: var(--card-shade); border-radius: 4px; padding: 14px; display: grid; gap: 10px; }
 footer { text-align: center; margin-top: 18px; }
 footer button { font: inherit; font-size: .85rem; background: none; border: 0; color: #d9e2f5; text-decoration: underline; cursor: pointer; padding: 8px; }
@@ -244,15 +250,30 @@ footer { position: relative; z-index: 1; }
         <fieldset>
           <legend>Who are you?</legend>
           <div class="pair">
-            <label for="f-name">Name <input id="f-name" type="text" maxlength="80" autocomplete="name" required></label>
+            <label for="f-name">First and last name <input id="f-name" type="text" maxlength="80" autocomplete="name" required></label>
             <label for="f-email">Email <input id="f-email" type="email" maxlength="120" autocomplete="email" required></label>
           </div>
           <p class="soft" style="margin:-8px 0 0">Your draw is emailed here, so double-check it.</p>
           <label for="f-phone" id="phoneWrap" hidden>Mobile number <small>optional. Add it to also get your draw by text (US numbers).</small>
             <input id="f-phone" type="tel" maxlength="20" autocomplete="tel" placeholder="555-123-4567"></label>
-          <label for="f-household">Household <small>People with the same household name never draw each other. Pick yours from the list if someone in your home already signed up, or type a new one.</small>
-            <input id="f-household" type="text" maxlength="60" list="houseList" autocomplete="off" placeholder="Wilson house" required></label>
-          <datalist id="houseList"></datalist>
+        </fieldset>
+        <fieldset>
+          <legend>Your household</legend>
+          <div class="choice" role="radiogroup" aria-labelledby="liveQ">
+            <span id="liveQ" class="q">Do you live with someone who is also taking part?</span>
+            <div class="row">
+              <label class="pick" for="f-live-yes"><input id="f-live-yes" type="radio" name="live" value="yes"> Yes</label>
+              <label class="pick" for="f-live-no"><input id="f-live-no" type="radio" name="live" value="no"> No</label>
+            </div>
+          </div>
+          <div id="mateWrap" hidden>
+            <label for="f-mates">How many people? <small>not counting yourself</small>
+              <select id="f-mates" style="max-width:9rem">
+                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+              </select></label>
+            <div id="mateNames" style="display:grid;gap:16px;margin-top:16px"></div>
+            <p class="soft" style="margin:10px 0 0">You won't draw the people you list, and they won't draw you.</p>
+          </div>
         </fieldset>
         <fieldset>
           <legend>Your sizes</legend>
@@ -383,12 +404,16 @@ footer { position: relative; z-index: 1; }
     var people = [], draw = null, n = 0;
     function list() {
       return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true, textCredits: 188,
-        people: people.map(function (p) { return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null }, p); }) };
+        people: people.map(function (p) {
+          var mates = p.housemates || [], names = people.map(function (o) { return o.name.toLowerCase(); });
+          return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null,
+            apart: mates.filter(function (m) { return names.indexOf(m.toLowerCase()) >= 0; }),
+            unmatched: mates.filter(function (m) { return names.indexOf(m.toLowerCase()) < 0; }) }, p);
+        }) };
     }
     function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
     return {
-      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true,
-        households: people.map(function (p) { return p.household; }).filter(function (h, i, a) { return h && a.indexOf(h) === i; }) }; },
+      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true }; },
       signUp: function (f) {
         if (draw) throw new Error('Sign-ups are closed. Names have already been drawn.');
         if (people.some(function (p) { return p.email === f.email.toLowerCase(); })) throw new Error('That email address is already signed up.');
@@ -412,7 +437,11 @@ footer { position: relative; z-index: 1; }
       adminResend: function (pw) { admin(pw); return list(); },
       adminReset: function (pw) { admin(pw); draw = null; return list(); },
       adminTestText: function (pw, phone) { admin(pw); return { ok: false, message: 'Preview mode: no text was sent to ' + phone + '.' }; },
-      adminSetHousehold: function (pw, id, h) { admin(pw); people.forEach(function (p) { if (p.id === id) p.household = String(h).trim(); }); return list(); },
+      adminSetHousemates: function (pw, id, names) {
+        admin(pw);
+        people.forEach(function (p) { if (p.id === id) p.housemates = String(names).split(',').map(function (s) { return s.trim(); }).filter(Boolean); });
+        return list();
+      },
       adminClearAll: function (pw) { admin(pw); people = []; draw = null; return list(); }
     };
   })();
@@ -470,8 +499,6 @@ footer { position: relative; z-index: 1; }
       document.querySelectorAll('[data-max]').forEach(function (n) { n.textContent = max; });
       show($('detailsLine'), s.details);
       $('phoneWrap').hidden = !s.texts;
-      var houses = $('houseList'); houses.textContent = '';
-      (s.households || []).forEach(function (h) { var o = document.createElement('option'); o.value = h; houses.append(o); });
       $('count').textContent = s.count === 0 ? 'The hat is empty. Be the first name in!'
         : s.count === 1 ? '1 name in the hat so far' : s.count + ' names in the hat so far';
       $('homeOpen').hidden = s.drawn; $('homeClosed').hidden = !s.drawn;
@@ -480,11 +507,30 @@ footer { position: relative; z-index: 1; }
   $('startBtn').addEventListener('click', function () { go('form'); $('f-name').focus(); });
 
   /* ---- Sign-up ---- */
-  var fields = ['name', 'email', 'household', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+  var fields = ['name', 'email', 'shirt', 'pants', 'shoes', 'colors', 'food', 'hobbies'];
+
+  /* Household question: yes/no, then how many, then one name box per housemate. */
+  function drawMateBoxes() {
+    var want = Number($('f-mates').value), box = $('mateNames');
+    while (box.children.length > want) box.lastChild.remove();
+    while (box.children.length < want) {
+      var i = box.children.length + 1, label = el('label', null, 'First and last name of person ' + i + ' ');
+      var input = el('input'); input.type = 'text'; input.maxLength = 80; input.id = 'f-mate-' + i; input.autocomplete = 'off';
+      label.htmlFor = input.id; label.append(input); box.append(label);
+    }
+  }
+  function showMates() { $('mateWrap').hidden = !$('f-live-yes').checked; if ($('f-live-yes').checked) drawMateBoxes(); }
+  $('f-live-yes').addEventListener('change', showMates);
+  $('f-live-no').addEventListener('change', showMates);
+  $('f-mates').addEventListener('change', drawMateBoxes);
+  $('signupForm').addEventListener('reset', function () { setTimeout(function () { $('mateNames').textContent = ''; showMates(); }, 0); });
   function readForm() {
     var d = {};
     fields.forEach(function (f) { d[f] = $('f-' + f).value.trim(); });
     d.phone = $('phoneWrap').hidden ? '' : $('f-phone').value.trim();
+    d.housemates = $('f-live-yes').checked
+      ? Array.prototype.map.call($('mateNames').querySelectorAll('input'), function (i) { return i.value.trim(); })
+      : [];
     return d;
   }
   $('signupForm').addEventListener('submit', function (e) {
@@ -492,6 +538,8 @@ footer { position: relative; z-index: 1; }
     var d = readForm(), err = '';
     if (!d.name) err = 'Please enter your name.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) err = 'Please enter a valid email address.';
+    else if (!$('f-live-yes').checked && !$('f-live-no').checked) err = 'Please answer whether you live with someone who is also taking part.';
+    else if (d.housemates.some(function (m) { return !m; })) err = 'Please enter the first and last name of each person you live with, or lower the number.';
     else if (fields.some(function (f) { return !d[f]; })) err = 'Please fill in every question so your Secret Santa has something to go on.';
     else if (d.phone && !/^1?\d{10}$/.test(d.phone.replace(/\D/g, ''))) err = 'Please enter a 10-digit US mobile number, or leave it blank.';
     show($('formErr'), err);
@@ -574,7 +622,7 @@ footer { position: relative; z-index: 1; }
       if (n < data.minPeople) {
         panel.append(el('span', 'soft', 'You need at least ' + data.minPeople + ' people before you can draw names.'));
       } else {
-        panel.append(el('span', 'soft', 'Drawing closes sign-ups and emails each person the name they drew. You will not see who drew whom. People who share a household name never draw each other, so check the household on each card first.'));
+        panel.append(el('span', 'soft', 'Drawing closes sign-ups and emails each person the name they drew. You will not see who drew whom. People who live together never draw each other, so check the "Will not draw" line on each card first.'));
         panel.append(confirmBtn('Draw names and send emails', '', 'Draw now for ' + n + ' people?', 'Yes, draw names', function (b) {
           act(b, 'Drawing and emailing…', 'adminDraw', [], function (d) {
             var sent = d.people.filter(function (p) { return p.emailed; }).length;
@@ -608,17 +656,22 @@ footer { position: relative; z-index: 1; }
       if (data.drawn && (p.texted === true || p.texted === false)) head.append(el('span', 'badge' + (p.texted ? '' : ' bad'), p.texted ? 'Texted' : 'Text failed'));
       card.append(head, el('div', 'mail', p.email + (p.phone ? ' · ' + p.phone : '')));
       var dl = el('dl');
-      [['Household', p.household || 'None set (on their own)'], ['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
+      [['Will not draw', (p.apart || []).length ? p.apart.join(', ') : 'Nobody set (can draw anyone)'], ['Shirt', p.shirt], ['Pants', p.pants], ['Shoes', p.shoes], ['Colors', p.colors], ['Food', p.food], ['Hobbies', p.hobbies]]
         .forEach(function (r) { dl.append(el('dt', null, r[0]), el('dd', null, r[1])); });
       card.append(dl);
+      if (!data.drawn && (p.unmatched || []).length) {
+        card.append(el('p', 'msg err', 'Listed as living with ' + p.unmatched.join(', ') +
+          ', but nobody on the list has that name yet. If they have signed up under a different name, fix it with the button below.'));
+      }
       if (!data.drawn) {
         var houseRow = el('div', 'row');
-        var change = el('button', 'btn plain small', 'Change household'); change.type = 'button';
+        var change = el('button', 'btn plain small', 'Change who they live with'); change.type = 'button';
         change.addEventListener('click', function () {
-          var input = el('input'); input.type = 'text'; input.maxLength = 60; input.value = p.household || '';
-          input.setAttribute('aria-label', 'Household for ' + p.name); input.setAttribute('list', 'houseList'); input.style.maxWidth = '15rem';
+          var input = el('input'); input.type = 'text'; input.maxLength = 400; input.value = (p.housemates || []).join(', ');
+          input.placeholder = 'Names, separated by commas';
+          input.setAttribute('aria-label', 'People ' + p.name + ' lives with, separated by commas'); input.style.maxWidth = '20rem';
           var save = el('button', 'btn small', 'Save'); save.type = 'button';
-          save.addEventListener('click', function () { act(save, 'Saving…', 'adminSetHousehold', [p.id, input.value], p.name + "'s household was updated."); });
+          save.addEventListener('click', function () { act(save, 'Saving…', 'adminSetHousemates', [p.id, input.value], 'Updated who ' + p.name + ' lives with.'); });
           houseRow.textContent = ''; houseRow.append(input, save); input.focus();
         });
         houseRow.append(change); card.append(houseRow);
