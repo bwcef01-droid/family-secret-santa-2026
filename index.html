@@ -173,6 +173,39 @@ legend { font-family: var(--hand); font-size: 1.45rem; color: var(--red); paddin
 .ideas { list-style: none; padding: 0; margin: 0 0 18px; }
 .ideas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px dashed var(--gold); }
 .ideas a { color: var(--red); font-weight: 700; white-space: nowrap; }
+.ideas .shops { display: flex; gap: 6px 16px; }
+
+/* The result page is Santa's List: the card becomes a parchment scroll with a rolled rod at each end. */
+.notice.as-scroll {
+  --ink: #3a2c1a; --ink-soft: #6b5a3e;
+  margin: 52px 14px 30px; padding: 36px 26px 34px;
+  border: 0; border-radius: 0; color: var(--ink);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.45), transparent 60%),
+    linear-gradient(90deg, #ecd9ab 0, #f8edd0 9%, #f8edd0 91%, #ecd9ab 100%);
+  box-shadow: inset 0 14px 16px -12px rgba(110,75,25,.45), inset 0 -14px 16px -12px rgba(110,75,25,.45), 0 18px 40px rgba(0,0,0,.5);
+}
+.notice.as-scroll > header, .notice.as-scroll > .rule { display: none; }
+.notice.as-scroll::before, .notice.as-scroll::after {
+  content: ""; position: absolute; left: -14px; right: -14px; height: 30px; border-radius: 15px;
+  background:
+    linear-gradient(90deg, #8a1f26 0 14px, transparent 14px calc(100% - 14px), #8a1f26 calc(100% - 14px)),
+    linear-gradient(#f3dfae, #d2ad66 45%, #9a7136);
+  box-shadow: 0 5px 10px rgba(0,0,0,.4);
+}
+.notice.as-scroll::before { top: -20px; }
+.notice.as-scroll::after { bottom: -20px; }
+.list-kicker { text-align: center; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 2px; }
+.list-title { text-align: center; color: var(--red); font-size: clamp(2.6rem, 12vw, 3.6rem); line-height: 1.05; margin: 0 0 16px; }
+.list-budget { text-align: center; background: var(--pine); color: var(--cream); border-radius: 4px; padding: 12px 14px; margin: 0 0 14px; }
+.list-budget b { font-family: var(--display); font-size: 1.7rem; line-height: 1; color: #ffe9a8; white-space: nowrap; }
+.list-head { font-family: var(--display); font-weight: 700; font-size: 1.6rem; color: var(--pine); margin: 0 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.stamp { font-family: var(--body); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--red); border: 2px solid var(--red); border-radius: 4px; padding: 1px 8px; transform: rotate(-4deg); }
+.report p { margin: 0 0 8px; overflow-wrap: anywhere; }
+.list-sign { font-family: var(--hand); font-size: 1.7rem; line-height: 1.15; color: var(--red); text-align: right; margin: 6px 0 12px; }
+.list-foot { text-align: center; margin: 0; }
+.as-scroll .ideas li { border-bottom-color: #cfae6a; }
+.as-scroll .count { margin: 0; }
 .choice { display: grid; gap: 8px; }
 .choice .q { font-weight: 600; font-size: .95rem; }
 .pick { display: flex; grid-template-columns: none; align-items: center; gap: 8px; font-weight: 700; cursor: pointer;
@@ -344,18 +377,20 @@ footer { position: relative; z-index: 1; }
       <p class="count" id="resultWait">Opening your draw&hellip;</p>
       <p class="msg err" id="resultErr" hidden></p>
       <div id="resultBody" hidden>
+        <p class="list-kicker">Official North Pole business</p>
+        <h2 class="list-title">Santa&rsquo;s List</h2>
         <p class="drew"><span id="resultHowdy"></span> <b id="resultName"></b></p>
-        <div class="budget">
-          <div><b id="resultMin">$25</b><span>Minimum spend</span></div>
-          <div><b id="resultMax">$40</b><span>Maximum spend</span></div>
-        </div>
+        <p class="list-budget">Santa&rsquo;s budget for <span id="resultBudgetName"></span>: <b id="resultBudget">$25 &ndash; $40</b></p>
         <p class="soft" id="resultDetails" hidden></p>
-        <h2 id="resultAboutTitle">About them</h2>
-        <dl class="about" id="resultAbout"></dl>
-        <h2>Gift ideas on Amazon</h2>
-        <p class="soft">Picked from their answers. Each link opens Amazon already filtered to your budget.</p>
+        <hr class="rule">
+        <h3 class="list-head">Santa&rsquo;s report <span class="stamp">Nice list</span></h3>
+        <div class="report" id="resultReport"></div>
+        <hr class="rule">
+        <h3 class="list-head">Gift ideas from the workshop</h3>
+        <p class="soft" id="resultIdeasNote"></p>
         <ul class="ideas" id="resultIdeas"></ul>
-        <p class="msg ok">Keep it under your hat. This page is only for you, so don't share the link.</p>
+        <p class="list-sign">Keep it secret,<br>Santa</p>
+        <p class="soft list-foot">This scroll is for your eyes only, so don't share the link.</p>
       </div>
     </section>
 
@@ -429,8 +464,10 @@ footer { position: relative; z-index: 1; }
         if (code !== 'sample') throw new Error('This result link is not valid. Names may have been drawn again, so check for a newer email or text.');
         return { eventName: 'Secret Santa', details: '', min: 25, max: 40, giver: 'Ann', name: 'Bob', shirt: 'XL', pants: '36x32', shoes: "men's 11",
           colors: 'navy, forest green', food: 'beef jerky, hot sauce', hobbies: 'fishing, grilling, Xbox',
-          ideas: [{ label: 'fishing tackle gift set', url: 'https://www.amazon.com/s?k=fishing%20tackle%20gift%20set&rh=p_36%3A2500-4000' },
-            { label: 'Xbox gift card', url: 'https://www.amazon.com/s?k=Xbox%20gift%20card&rh=p_36%3A2500-4000' }] };
+          ideas: ['fishing tackle gift set', 'BBQ grilling tool set', 'Xbox gift card', 'beef jerky gift basket', 'navy fleece throw blanket'].map(function (q) {
+            return { label: q, url: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + '&rh=p_36%3A2500-4000',
+              walmart: 'https://www.walmart.com/search?q=' + encodeURIComponent(q) + '&min_price=25&max_price=40' };
+          }) };
       },
       adminList: function (pw) { admin(pw); return list(); },
       adminDelete: function (pw, id) { admin(pw); people = people.filter(function (p) { return p.id !== id; }); return list(); },
@@ -480,6 +517,7 @@ footer { position: relative; z-index: 1; }
   var views = ['home', 'form', 'rules', 'done', 'lookup', 'result', 'admin'];
   function go(name) {
     views.forEach(function (v) { $('v-' + v).hidden = v !== name; });
+    document.querySelector('.notice').classList.toggle('as-scroll', name === 'result');
     if (name === 'home') loadStatus();
     if (name !== 'admin') { adminPw = null; $('adminBody').hidden = true; $('loginForm').hidden = false; $('a-pw').value = ''; }
     window.scrollTo(0, 0);
@@ -700,21 +738,35 @@ footer { position: relative; z-index: 1; }
   /* ---- Personal result page ---- */
   function renderResult(r) {
       $('eventName').textContent = r.eventName; document.title = r.eventName;
-      $('resultHowdy').textContent = 'Secret Santa ' + r.giver + ', you are buying for';
+      $('resultHowdy').textContent = 'Secret Santa ' + r.giver + ', your list has one name on it this year:';
       $('resultName').textContent = r.name;
-      $('resultMin').textContent = '$' + r.min; $('resultMax').textContent = '$' + r.max;
+      $('resultBudgetName').textContent = r.name;
+      $('resultBudget').textContent = '$' + r.min + ' – $' + r.max;
       show($('resultDetails'), r.details);
-      $('resultAboutTitle').textContent = 'About ' + r.name;
-      var dl = $('resultAbout'); dl.textContent = '';
-      [['T-shirt size', r.shirt], ['Pants size', r.pants], ['Shoe size', r.shoes], ['Favorite colors', r.colors],
-        ['Favorite food', r.food], ['Hobbies & Interests', r.hobbies]]
-        .forEach(function (row) { dl.append(el('dt', null, row[0]), el('dd', null, row[1])); });
+      /* The report: plain sentences, with each of the person's own answers in bold. */
+      var report = $('resultReport'); report.textContent = '';
+      [[[r.name, true], ' has been very good this year. Santa checked twice.'],
+        ['Their favorite colors are ', [r.colors, true], '.'],
+        ['They like ', [r.hobbies, true], '.'],
+        ['Their favorite food is ', [r.food, true], '.'],
+        ['Their clothing sizes are: T-shirt ', [r.shirt, true], ', pants ', [r.pants, true], ', shoes ', [r.shoes, true], '.']]
+        .forEach(function (parts) {
+          var p = el('p');
+          parts.forEach(function (part) { p.append(typeof part === 'string' ? part : el('b', null, part[0])); });
+          report.append(p);
+        });
+      $('resultIdeasNote').textContent = 'Chosen from ' + r.name + "’s answers. Each link opens the store already filtered to Santa’s budget.";
       var ul = $('resultIdeas'); ul.textContent = '';
       (r.ideas || []).forEach(function (idea) {
-        if (String(idea.url).indexOf('https://') !== 0) return;
-        var li = el('li'), a = el('a', null, 'Shop on Amazon');
-        a.href = idea.url; a.target = '_blank'; a.rel = 'noopener';
-        li.append(el('span', null, idea.label), a); ul.append(li);
+        var li = el('li'), shops = el('span', 'shops');
+        [['Amazon', idea.url], ['Walmart', idea.walmart]].forEach(function (shop) {
+          if (String(shop[1]).indexOf('https://') !== 0) return;
+          var a = el('a', null, shop[0]);
+          a.href = shop[1]; a.target = '_blank'; a.rel = 'noopener';
+          shops.append(a);
+        });
+        if (!shops.childNodes.length) return;
+        li.append(el('span', null, idea.label), shops); ul.append(li);
       });
       show($('resultErr'), '');
       $('resultWait').hidden = true; $('resultBody').hidden = false;
