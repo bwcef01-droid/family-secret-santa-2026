@@ -372,6 +372,7 @@ footer { position: relative; z-index: 1; }
         <p class="msg err" id="adminErr" hidden></p>
         <div class="panel" id="drawPanel" style="margin-top:12px"></div>
         <div class="people" id="people"></div>
+        <p class="msg" id="emailFromNote" hidden style="margin-bottom:14px"></p>
         <div class="panel" id="textTest" hidden style="margin-bottom:14px">
           <strong>Check text links</strong>
           <span class="soft">Sends one test text containing a link to the number below and shows the texting service's answer. It uses one credit only if the text goes through.</span>
@@ -395,7 +396,7 @@ footer { position: relative; z-index: 1; }
   var $ = function (id) { return document.getElementById(id); };
   var live = !!(window.google && google.script && google.script.run);
   // When this page is hosted outside Apps Script (the Google Sites page), it talks to the script here.
-  var API_URL = 'https://script.google.com/macros/s/AKfycbyeirSh2xguaammJy_feSeN80aZIqI3rRoQnSCmY1o26hckWasoIe_-MpaFFdCfuI3d4A/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzVCEyPstYdz3S3_0KIW0gUV2v6iTwIc4eogfNXnUMSkGvG5Dtmr2zAM2Su_Gt1npVn/exec';
   var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   var remote = !live && !isLocal && !!API_URL;
 
@@ -403,7 +404,7 @@ footer { position: relative; z-index: 1; }
   var mock = (function () {
     var people = [], draw = null, n = 0;
     function list() {
-      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true, textCredits: 188,
+      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true, textCredits: 188, emailFrom: 'HeadElf@secretsantacentral.com', emailFromReady: true,
         people: people.map(function (p) {
           var mates = p.housemates || [], names = people.map(function (o) { return o.name.toLowerCase(); });
           return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null,
@@ -612,6 +613,12 @@ footer { position: relative; z-index: 1; }
     var panel = $('drawPanel'), list = $('people'), n = data.people.length;
     panel.textContent = ''; list.textContent = '';
     $('textTest').hidden = !data.textsOn;
+    var fromNote = $('emailFromNote');
+    fromNote.className = 'msg ' + (data.emailFromReady ? 'ok' : 'err');
+    show(fromNote, !data.emailFrom ? '' : data.emailFromReady
+      ? 'Emails are sent from ' + data.emailFrom + '.'
+      : 'Emails will go out from this Google account’s own address. ' + data.emailFrom +
+        ' is not set up as a "Send mail as" address in the Gmail account that runs the script.');
     var withPhone = data.people.filter(function (p) { return p.phone; }).length;
     show($('textCredits'), typeof data.textCredits === 'number'
       ? 'Text credits left: ' + data.textCredits + (data.textCredits < withPhone ? '. That is fewer than the ' + withPhone + ' people who asked for a text, so buy more before drawing.' : '')
