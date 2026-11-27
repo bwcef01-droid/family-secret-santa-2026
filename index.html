@@ -112,7 +112,7 @@ form { display: grid; gap: 16px; }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
 label { display: grid; gap: 5px; font-weight: 600; font-size: .95rem; min-width: 0; }
 label small { font-weight: 400; color: var(--ink-soft); }
-input[type=text], input[type=email], input[type=tel], input[type=password], select, textarea {
+input[type=text], input[type=email], input[type=tel], input[type=password], input[type=number], select, textarea {
   font: inherit; color: var(--ink); background: var(--cream);
   border: 1.5px solid #dcc790; border-radius: 10px;
   padding: 10px 12px; width: 100%; min-width: 0;
@@ -345,11 +345,11 @@ footer { position: relative; z-index: 1; }
       <h2>The rules of the swap</h2>
       <p class="soft">Your sign-up isn't finished until you accept these.</p>
       <div class="budget">
-        <div><b id="minSpend">$25</b><span>Minimum spend</span></div>
-        <div><b id="maxSpend">$40</b><span>Maximum spend</span></div>
+        <div><b id="minSpend">$25</b><span id="minLabel">Minimum spend</span></div>
+        <div id="maxWrap"><b id="maxSpend">$40</b><span>Maximum spend</span></div>
       </div>
       <ol class="rules">
-        <li><strong>Stay in the budget.</strong> Spend at least <span data-min>$25</span> and no more than <span data-max>$40</span> on your gift.</li>
+        <li><strong>Stay in the budget.</strong> <span id="ruleBudget">Spend at least $25 and no more than $40 on your gift.</span></li>
         <li><strong>You give one, you get one.</strong> Signing up means you buy a gift for the person you draw, and someone else buys one for you.</li>
         <li><strong>Keep it secret.</strong> Don't tell anyone who you drew, and don't ask who drew you.</li>
         <li><strong>Shop from their answers.</strong> Use the sizes and favorites your person gave so the gift fits them.</li>
@@ -407,6 +407,20 @@ footer { position: relative; z-index: 1; }
         <p class="msg ok" id="adminNote" hidden></p>
         <p class="msg err" id="adminErr" hidden></p>
         <div class="panel" id="drawPanel" style="margin-top:12px"></div>
+        <div class="panel" id="budgetPanel" style="margin-top:12px">
+          <strong>Gift budget</strong>
+          <div class="row" role="radiogroup" aria-label="Kind of budget">
+            <label class="pick" for="b-range"><input id="b-range" type="radio" name="btype" value="range"> A range</label>
+            <label class="pick" for="b-single"><input id="b-single" type="radio" name="btype" value="single"> One amount</label>
+          </div>
+          <div class="pair" id="b-rangeBoxes">
+            <label for="b-min">Minimum ($) <input id="b-min" type="number" inputmode="numeric" min="1" max="10000" step="1"></label>
+            <label for="b-max">Maximum ($) <input id="b-max" type="number" inputmode="numeric" min="1" max="10000" step="1"></label>
+          </div>
+          <label for="b-amount" id="b-singleBox" hidden>Amount ($) <input id="b-amount" type="number" inputmode="numeric" min="1" max="10000" step="1" style="max-width:10rem"></label>
+          <span class="soft" id="b-note"></span>
+          <div class="row"><button class="btn small" id="budgetSave" type="button">Save budget</button></div>
+        </div>
         <div class="people" id="people"></div>
         <p class="msg" id="emailFromNote" hidden style="margin-bottom:14px"></p>
         <div class="panel" id="textTest" hidden style="margin-bottom:14px">
@@ -438,9 +452,9 @@ footer { position: relative; z-index: 1; }
 
   /* ---- Preview stand-in for the server, used only when the file is opened outside Apps Script ---- */
   var mock = (function () {
-    var people = [], draw = null, n = 0;
+    var people = [], draw = null, n = 0, budget = { min: 25, max: 40 };
     function list() {
-      return { drawn: !!draw, drawnAt: draw, minPeople: 3, emailsLeftToday: 100, textsOn: true, textCredits: 188, emailFrom: 'HeadElf@secretsantacentral.com', emailFromReady: true,
+      return { drawn: !!draw, drawnAt: draw, minPeople: 3, budget: { min: budget.min, max: budget.max }, emailsLeftToday: 100, textsOn: true, textCredits: 188, emailFrom: 'HeadElf@secretsantacentral.com', emailFromReady: true,
         people: people.map(function (p) {
           var mates = p.housemates || [], names = people.map(function (o) { return o.name.toLowerCase(); });
           return Object.assign({ emailed: !!draw, texted: draw && p.phone ? true : null,
@@ -450,7 +464,13 @@ footer { position: relative; z-index: 1; }
     }
     function admin(pw) { if (pw !== 'preview') throw new Error('Wrong password.'); }
     return {
-      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: 25, max: 40, count: people.length, drawn: !!draw, texts: true }; },
+      adminSetBudget: function (pw, min, max) {
+        admin(pw); min = Math.round(Number(min)); max = Math.round(Number(max));
+        if (!(min >= 1) || !(max >= 1) || min > 10000 || max > 10000) throw new Error('Please enter whole dollar amounts between $1 and $10,000.');
+        if (min > max) throw new Error('The minimum cannot be more than the maximum.');
+        budget = { min: min, max: max }; return list();
+      },
+      getStatus: function () { return { eventName: 'Secret Santa', details: '', min: budget.min, max: budget.max, count: people.length, drawn: !!draw, texts: true }; },
       signUp: function (f) {
         if (draw) throw new Error('Sign-ups are closed. Names have already been drawn.');
         if (people.some(function (p) { return p.email === f.email.toLowerCase(); })) throw new Error('That email address is already signed up.');
@@ -463,7 +483,7 @@ footer { position: relative; z-index: 1; }
       },
       getResult: function (code) {
         if (code !== 'sample') throw new Error('This result link is not valid. Names may have been drawn again, so check for a newer email or text.');
-        return { eventName: 'Secret Santa', details: '', min: 25, max: 40, giver: 'Ann', name: 'Bob', shirt: 'XL', pants: '36x32', shoes: "men's 11",
+        return { eventName: 'Secret Santa', details: '', min: budget.min, max: budget.max, giver: 'Ann', name: 'Bob', shirt: 'XL', pants: '36x32', shoes: "men's 11",
           colors: 'navy, forest green', food: 'beef jerky, hot sauce', hobbies: 'fishing, grilling, Xbox',
           ideas: ['fishing tackle gift set', 'BBQ grilling tool set', 'Xbox gift card', 'beef jerky gift basket', 'navy fleece throw blanket'].map(function (q) {
             return { label: q, url: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + '&rh=p_36%3A2500-4000',
@@ -508,6 +528,8 @@ footer { position: relative; z-index: 1; }
   }
 
   function show(msgEl, text) { msgEl.textContent = text || ''; msgEl.hidden = !text; }
+  /* "$30" for a single-amount budget, "$25 – $40" for a range. */
+  function money(min, max) { return min === max ? '$' + min : '$' + min + ' – $' + max; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function busy(btn, on, label) {
     if (on) { btn.dataset.label = btn.textContent; btn.textContent = label || 'Working…'; btn.disabled = true; }
@@ -533,10 +555,13 @@ footer { position: relative; z-index: 1; }
     api('getStatus').then(function (s) {
       $('eventName').textContent = s.eventName;
       document.title = s.eventName;
-      var min = '$' + s.min, max = '$' + s.max;
-      $('minSpend').textContent = min; $('maxSpend').textContent = max;
-      document.querySelectorAll('[data-min]').forEach(function (n) { n.textContent = min; });
-      document.querySelectorAll('[data-max]').forEach(function (n) { n.textContent = max; });
+      var single = s.min === s.max;
+      $('minSpend').textContent = '$' + s.min; $('maxSpend').textContent = '$' + s.max;
+      $('minLabel').textContent = single ? 'Gift budget' : 'Minimum spend';
+      $('maxWrap').hidden = single;
+      $('ruleBudget').textContent = single
+        ? 'Spend $' + s.min + ' on your gift, as close as you can get.'
+        : 'Spend at least $' + s.min + ' and no more than $' + s.max + ' on your gift.';
       show($('detailsLine'), s.details);
       $('phoneWrap').hidden = !s.texts;
       $('count').textContent = s.count === 0 ? 'The hat is empty. Be the first name in!'
@@ -660,9 +685,35 @@ footer { position: relative; z-index: 1; }
     return box;
   }
 
+  /* ---- Gift budget: a range, or one amount (saved as the same number for min and max). ---- */
+  function showBudgetBoxes() {
+    var single = $('b-single').checked;
+    $('b-rangeBoxes').hidden = single; $('b-singleBox').hidden = !single;
+  }
+  $('b-range').addEventListener('change', showBudgetBoxes);
+  $('b-single').addEventListener('change', showBudgetBoxes);
+  function renderBudget(b, drawn) {
+    var single = b.min === b.max;
+    $('b-single').checked = single; $('b-range').checked = !single;
+    $('b-min').value = b.min; $('b-max').value = b.max; $('b-amount').value = b.max;
+    showBudgetBoxes();
+    $('b-note').textContent = 'Now: ' + money(b.min, b.max) + '. Shows on the rules page, the emails, the texts and each Santa’s List.' +
+      (drawn ? ' Names are already drawn: anyone who opens their list now sees the new budget, but emails and texts already sent keep the old one.' : '');
+  }
+  $('budgetSave').addEventListener('click', function () {
+    var min, max;
+    if ($('b-single').checked) { min = max = $('b-amount').value; }
+    else { min = $('b-min').value; max = $('b-max').value; }
+    act(this, 'Saving…', 'adminSetBudget', [min, max], function (d) {
+      return 'Budget set to ' + money(d.budget.min, d.budget.max) + '.';
+    });
+  });
+
   function render(data) {
     var panel = $('drawPanel'), list = $('people'), n = data.people.length;
     panel.textContent = ''; list.textContent = '';
+    $('budgetSave').textContent = 'Save budget'; $('budgetSave').disabled = false;
+    if (data.budget) renderBudget(data.budget, data.drawn);
     $('textTest').hidden = !data.textsOn;
     var fromNote = $('emailFromNote');
     fromNote.className = 'msg ' + (data.emailFromReady ? 'ok' : 'err');
@@ -754,7 +805,7 @@ footer { position: relative; z-index: 1; }
       $('resultHowdy').textContent = 'Secret Santa ' + r.giver + ', your list has one name on it this year:';
       $('resultName').textContent = r.name;
       $('resultBudgetName').textContent = r.name;
-      $('resultBudget').textContent = '$' + r.min + ' – $' + r.max;
+      $('resultBudget').textContent = money(r.min, r.max);
       show($('resultDetails'), r.details);
       /* The report: plain sentences, with each of the person's own answers in bold. */
       var report = $('resultReport'); report.textContent = '';
